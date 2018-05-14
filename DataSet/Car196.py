@@ -7,18 +7,19 @@ import torchvision.datasets as datasets
 class Car196:
     def __init__(self, root, train=True, test=True, transform=None):
         # Data loading code
-        std_value = 1.0 / 255.0
+
+        std_values = [0.229, 0.224, 0.225]
         mean_values = [104 / 255.0, 117 / 255.0, 128 / 255.0]
 
         if transform is None:
             transform = [transforms.Compose([
                 transforms.CovertBGR(),
                 transforms.Resize(256),
-                transforms.RandomResizedCrop(size=227, scale=(0.16, 1.4)),
+                transforms.RandomResizedCrop(scale=(0.16, 1), size=227),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=mean_values,
-                                     std=3 * [std_value]),
+                                     std=std_values),
             ]),
                 transforms.Compose([
                     transforms.CovertBGR(),
@@ -26,7 +27,7 @@ class Car196:
                     transforms.CenterCrop(227),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=mean_values,
-                                         std=3 * [std_value]),
+                                         std=std_values),
                 ])]
 
         if root is None:

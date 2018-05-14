@@ -10,7 +10,7 @@ class CUB200:
     def __init__(self, root, train=True, test=True, transform=None):
         # Data loading code
 
-        std_value = 1.0 / 255.0
+        std_values = [0.229, 0.224, 0.225]
         mean_values = [104 / 255.0, 117 / 255.0, 128 / 255.0]
 
         if transform is None:
@@ -21,7 +21,7 @@ class CUB200:
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=mean_values,
-                                     std=3 * [std_value]),
+                                     std=std_values),
             ]),
                 transforms.Compose([
                     transforms.CovertBGR(),
@@ -29,8 +29,9 @@ class CUB200:
                     transforms.CenterCrop(227),
                     transforms.ToTensor(),
                     transforms.Normalize(mean=mean_values,
-                                         std=3 * [std_value]),
+                                         std=std_values),
                 ])]
+
         if root is None:
             root = '/opt/intern/users/xunwang/DataSet/CUB_200_2011'
 

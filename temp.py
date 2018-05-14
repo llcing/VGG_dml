@@ -7,8 +7,8 @@ import torch.utils.data
 from torch.backends import cudnn
 from torch.autograd import Variable
 import models
-
-model = models.create(args.net, pretrained=True)
+net = 'vgg'
+model = models.create(net, pretrained=True)
 
 model.features = torch.nn.Sequential(
     model.features,
