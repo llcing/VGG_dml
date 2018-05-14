@@ -24,7 +24,7 @@ def main(args):
     display(args)
 
     if args.r is None:
-        model = models.create(args.net, Embed_dim=args.dim)
+        model = models.create(args.net)
         # load part of the model
         model_dict = model.state_dict()
         # print(model_dict)
@@ -59,7 +59,7 @@ def main(args):
     print('initial model is save at %s' % log_dir)
 
     # fine tune the model: the learning rate for pre-trained parameter is 1/10
-    new_param_ids = set(map(id, model.Embed.parameters()))
+    new_param_ids = set(map(id, model.classifier.parameters()))
 
     new_params = [p for p in model.parameters() if
                   id(p) in new_param_ids]
@@ -119,7 +119,7 @@ def main(args):
             loss.backward()
             optimizer.step()
 
-            running_loss += loss.data[0]
+            running_loss += loss.item()
             running_neg += dist_an
             running_pos += dist_ap
 

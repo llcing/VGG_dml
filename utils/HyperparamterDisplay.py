@@ -16,5 +16,5 @@ def display(args):
     # print('Number of Neighbour \t%d' % args.k)
     print('Alpha \t %d' % args.alpha)
 
-    print('Begin to fine tune BN-inception Network')
+    print('Begin to fine tune VGG16-BN Network')
     print(40*'#')

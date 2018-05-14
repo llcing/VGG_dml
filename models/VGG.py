@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import math
@@ -162,7 +163,7 @@ def vgg16_bn(pretrained=False, **kwargs):
         kwargs['init_weights'] = False
     model = VGG(make_layers(cfg['D'], batch_norm=True), **kwargs)
     if pretrained:
-        model.load_state_dict(model_urls['vgg16_bn'])
+        model.load_state_dict(torch.load(model_urls['vgg16_bn']))
     return model
 
 

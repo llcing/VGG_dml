@@ -22,19 +22,18 @@ args = parser.parse_args()
 # model = inception_v3(dropout=0.5)
 model = torch.load(args.r)
 model = model.cuda()
-
+print(model)
 temp = args.r.split('/')
 name = temp[-1][:-10]
 if args.test == 1:
     data = DataSet.create(args.data, train=False)
     data_loader = torch.utils.data.DataLoader(
-        data.test, batch_size=128, shuffle=False, drop_last=False)
+        data.test, batch_size=48, shuffle=False, drop_last=False)
 else:
     data = DataSet.create(args.data, test=False)
     data_loader = torch.utils.data.DataLoader(
-        data.train, batch_size=128, shuffle=False, drop_last=False)
-
-features, labels = extract_features(model, data_loader, print_freq=1e5, metric=None)
+        data.train, batch_size=48, shuffle=False, drop_last=False)
+features, labels = extract_features(model, data_loader, print_freq=8, metric=None)
 
 num_class = len(set(labels))
 

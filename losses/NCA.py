@@ -8,7 +8,7 @@ import numpy as np
 
 
 class NCA(nn.Module):
-    def __init__(self, alpha=16, k=32, normalized=True):
+    def __init__(self, alpha=16, k=12, normalized=True):
         super(NCA, self).__init__()
         self.alpha = alpha
         self.K = k
@@ -38,7 +38,7 @@ class NCA(nn.Module):
         neg_dist = neg_dist.resize(
             len(neg_dist) // num_neg_instances, num_neg_instances)
 
-        loss = list()
+        loss = 0 
         acc_num = 0
 
         for i, pos_pair in enumerate(pos_dist):
@@ -62,23 +62,22 @@ class NCA(nn.Module):
             if i == 1 and np.random.randint(1024) == 1:
                 print('pos_pair is ---------', pos_neig)
                 print('neg_pair is ---------', neg_neig)
-
-            base = torch.mean(dist_mat[i]).data[0]
+            base = torch.mean(dist_mat[i]).item()
             # 计算logit, base的作用是防止超过计算机浮点数
             pos_logit = torch.sum(torch.exp(self.alpha*(base - pos_neig)))
             neg_logit = torch.sum(torch.exp(self.alpha*(base - neg_neig)))
             loss_ = -torch.log(pos_logit/(pos_logit + neg_logit))
 
-            if loss_.data[0] < 0.6:
+            if loss_.item() < 0.6:
                 acc_num += 1
-            loss.append(loss_)
-
+#            loss.append(loss_)
         # 遍历所有样本为Anchor，对Loss取平均
-        loss = torch.mean(torch.cat(loss))
-
+    #    loss = torch.mean(torch.Tensor(loss))
+            loss = loss + loss_
+        loss = loss/n
         accuracy = float(acc_num)/n
-        neg_d = torch.mean(neg_dist).data[0]
-        pos_d = torch.mean(pos_dist).data[0]
+        neg_d = torch.mean(neg_dist).item()
+        pos_d = torch.mean(pos_dist).item()
 
         return loss, accuracy, pos_d, neg_d
 
@@ -108,13 +107,14 @@ def main():
     # margin = 0.5
     x = Variable(torch.rand(data_size, input_dim), requires_grad=False)
     w = Variable(torch.rand(input_dim, output_dim), requires_grad=True)
-    inputs = x.mm(w)
+    inputs = x.mm(w).cuda()
     y_ = 8*list(range(num_class))
-    targets = Variable(torch.IntTensor(y_))
+    targets = Variable(torch.IntTensor(y_)).cuda()
 
-    print(NCA(alpha=30)(inputs, targets))
-
+    loss, accuracy, pos_d, neg_d = NCA(alpha=30)(inputs, targets)
+    loss.backward()
 
 if __name__ == '__main__':
     main()
     print('Congratulations to you!')
+
