@@ -1,13 +1,10 @@
-from .inception import inception_v3
+from __future__ import print_function, absolute_import
 from .BN_Inception import BNInception
-from .resnet import resnet50
 from .VGG import vgg16_bn
 
 __factory = {
     'bn': BNInception,
-    'inception': inception_v3,
-    'resnet50': resnet50,
-    'vgg16_bn': vgg16_bn,
+    'vgg': vgg16_bn,
 }
 
 
