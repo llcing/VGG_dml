@@ -19,3 +19,13 @@ model.classifier = torch.nn.Sequential(
     torch.nn.Linear(512, 512)
 )
 print(model)
+model_dict = model.state_dict()
+print('initialize the FC layer orthogonally')
+w = model_dict['classifier.0.weight']
+print(w[0][0])
+model_dict['classifier.0.weight'] = torch.nn.init.orthogonal_(w)
+
+model_dict = model.state_dict()
+w = model_dict['classifier.0.weight']
+print(w[0][0])
+

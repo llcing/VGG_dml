@@ -43,11 +43,11 @@ def main(args):
         if args.init == 'orth':
              print('initialize the FC layer orthogonally')
              w = model_dict['classifier.0.weight']
-             model_dict['classifier.0.weight'] = torch.nn.init.orthogonal(w)
+             model_dict['classifier.0.weight'] = torch.nn.init.orthogonal_(w)
         # zero bias
              model_dict['classifier.0.bias'] = torch.zeros(args.dim)
         #
-        model.load_state_dict(model_dict)
+        # model.load_state_dict(model_dict)
     else:
         # resume model
         model = torch.load(args.r)
