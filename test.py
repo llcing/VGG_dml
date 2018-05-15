@@ -22,7 +22,7 @@ args = parser.parse_args()
 # model = inception_v3(dropout=0.5)
 model = torch.load(args.r)
 model = model.cuda()
-print(model)
+# print(model)
 temp = args.r.split('/')
 name = temp[-1][:-10]
 if args.test == 1:

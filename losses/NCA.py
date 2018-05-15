@@ -81,8 +81,6 @@ class NCA(nn.Module):
 
         return loss, accuracy, pos_d, neg_d
 
-
-
 def normalize(x):
     norm = x.norm(dim=1, p=2, keepdim=True)
     x = x.div(norm.expand_as(x))

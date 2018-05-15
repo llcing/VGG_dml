@@ -11,6 +11,12 @@ from utils.meters import AverageMeter
 from .cnn import extract_cnn_feature
 
 
+def normalize(x):
+    norm = x.norm(dim=1, p=2, keepdim=True)
+    x = x.div(norm.expand_as(x))
+    return x
+
+
 def extract_features(model, data_loader, print_freq=1, metric=None):
     model.eval()
     batch_time = AverageMeter()
@@ -47,6 +53,8 @@ def pairwise_distance(features, metric=None):
     n = len(features)
     x = torch.cat(features)
     x = x.view(n, -1)
+    # normalize feature before test
+    x = normalize(x)
     # print(4*'\n', x.size())
     if metric is not None:
         x = metric.transform(x)
