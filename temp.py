@@ -16,7 +16,6 @@ model.features = torch.nn.Sequential(
     torch.nn.Dropout(p=0.01)
 )
 model.classifier = torch.nn.Sequential(
-    torch.nn.Linear(512, 512)
 )
 print(model)
 model_dict = model.state_dict()

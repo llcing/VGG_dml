@@ -10,8 +10,10 @@ class Products:
     def __init__(self, root, train=True, test=True, transform=None):
         # Data loading code
 
-        std_values = [0.229, 0.224, 0.225]
-        mean_values = [104 / 255.0, 117 / 255.0, 128 / 255.0]
+        # std_values = [0.229, 0.224, 0.225]
+        # mean_values = [104 / 255.0, 117 / 255.0, 128 / 255.0]
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
 
         if transform is None:
             transform = [transforms.Compose([
@@ -20,16 +22,14 @@ class Products:
                 transforms.RandomResizedCrop(scale=(0.16, 1), size=227),
                 transforms.RandomHorizontalFlip(),
                 transforms.ToTensor(),
-                transforms.Normalize(mean=mean_values,
-                                     std=std_values),
+                normalize,
             ]),
                 transforms.Compose([
                     transforms.CovertBGR(),
                     transforms.Resize(256),
                     transforms.CenterCrop(227),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=mean_values,
-                                         std=std_values),
+                    normalize,
                 ])]
 
         if root is None:
