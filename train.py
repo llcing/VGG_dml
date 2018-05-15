@@ -40,15 +40,14 @@ def main(args):
         )
 
         # # orth init
-        # if args.init == 'orth':
-        #     print('initialize the FC layer orthogonally')
-        #     _, _, v = torch.svd(model_dict['Embed.linear.weight'])
-        #     model_dict['Embed.linear.weight'] = v.t()
+        if args.init == 'orth':
+             print('initialize the FC layer orthogonally')
+             w = model_dict['classifier.0.weight']
+             model_dict['classifier.0.weight'] = torch.nn.init.orthogonal(w)
+        # zero bias
+             model_dict['classifier.0.bias'] = torch.zeros(args.dim)
         #
-        # # zero bias
-        # model_dict['Embed.linear.bias'] = torch.zeros(args.dim)
-        #
-        # model.load_state_dict(model_dict)
+        model.load_state_dict(model_dict)
     else:
         # resume model
         model = torch.load(args.r)
