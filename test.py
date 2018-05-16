@@ -33,7 +33,7 @@ else:
     data = DataSet.create(args.data, test=False)
     data_loader = torch.utils.data.DataLoader(
         data.train, batch_size=48, shuffle=False, drop_last=False)
-features, labels = extract_features(model, data_loader, print_freq=8, metric=None)
+features, labels = extract_features(model, data_loader, print_freq=1000, metric=None)
 
 num_class = len(set(labels))
 
