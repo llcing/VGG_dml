@@ -66,7 +66,7 @@ def main(args):
     base_params = [p for p in model.parameters() if
                    id(p) not in new_param_ids]
     param_groups = [
-                {'params': base_params, 'lr_mult': 0.1},
+                {'params': base_params, 'lr_mult': 1.0},
                 {'params': new_params, 'lr_mult': 1.0}]
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
@@ -80,6 +80,8 @@ def main(args):
         criterion = losses.create(args.loss, k=args.k, margin=args.margin).cuda()
     elif args.loss == 'nca':
         criterion = losses.create(args.loss, alpha=args.alpha, k=args.k).cuda()
+    elif args.loss == 'triplet':
+        criterion = losses.create(args.loss, alpha=args.alpha).cuda()
 
     data = DataSet.create(args.data, root=None, test=False)
     train_loader = torch.utils.data.DataLoader(

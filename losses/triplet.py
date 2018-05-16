@@ -8,11 +8,10 @@ import numpy as np
 
 
 """
-To Implement the Triplet Loss in paper : 
+To Implement the Triplet Loss in paper :
 Generalization in Metric Learning: Should the Embedding Layer be the Embedding Layer?
 https://arxiv.org/pdf/1803.03310.pdf
 """
-
 
 
 class Triplet(nn.Module):
@@ -22,8 +21,9 @@ class Triplet(nn.Module):
 
     def forward(self, inputs, targets):
         n = inputs.size(0)
+        inputs = self.alpha * normalize(inputs)
         # Compute pairwise distance
-        dist_mat = self.alpha*euclidean_dist(inputs)
+        dist_mat = euclidean_dist(inputs)
         targets = targets.cuda()
         # split the positive and negative pairs
         eyes_ = Variable(torch.eye(n, n)).cuda()
@@ -86,8 +86,14 @@ def euclidean_dist(inputs_):
     dist = dist + dist.t()
     dist.addmm_(1, -2, inputs_, inputs_.t())
     # for numerical stability
-    dist = dist.clamp(min=1e-12).sqrt()
+    # dist = dist.clamp(min=1e-12).sqrt()
     return dist
+
+
+def normalize(x):
+    norm = x.norm(dim=1, p=2, keepdim=True)
+    x = x.div(norm.expand_as(x))
+    return x
 
 
 def main():
@@ -98,12 +104,12 @@ def main():
     # margin = 0.5
     x = Variable(torch.rand(data_size, input_dim), requires_grad=False)
     w = Variable(torch.rand(input_dim, output_dim), requires_grad=True)
-    inputs = x.mm(w)
+    inputs = x.mm(w).cuda()
     y_ = 8*list(range(num_class))
-    targets = Variable(torch.IntTensor(y_))
+    targets = Variable(torch.IntTensor(y_)).cuda()
 
-    print(Triplet(alpha=4)(inputs, targets))
-
+    loss, accuracy, pos_d, neg_d = Triplet(alpha=3)(inputs, targets)
+    loss.backward()
 
 if __name__ == '__main__':
     main()
