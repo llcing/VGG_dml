@@ -126,7 +126,7 @@ def main(args):
 
             if epoch == 0 and i == 0:
                 print(50 * '#')
-                print('Train Begin -- HA-HA-HA')
+                print('Train Begin -- HA-HA-HA-HA 55555 333')
 
         loss_list.append(running_loss)
         pos_list.append(running_pos / i)
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Metric Learning')
 
     # hype-parameters
-    parser.add_argument('-lr', type=float, default=1e-4, help="learning rate of new parameters")
+    parser.add_argument('-lr', type=float, default=1e-5, help="learning rate of new parameters")
     parser.add_argument('-BatchSize', '-b', default=128, type=int, metavar='N',
                         help='mini-batch size (1 = pure stochastic) Default: 256')
     parser.add_argument('-num_instances', default=8, type=int, metavar='n',
