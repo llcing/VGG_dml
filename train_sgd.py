@@ -101,19 +101,19 @@ def main(args):
         if it < 100:
             optimizer.param_groups[0]['lr'] = 0.00
             optimizer.param_groups[1]['lr'] = 0.01
-            optimizer.param_groups[2]['lr'] = 0.01
+            # optimizer.param_groups[2]['lr'] = 0.01
         elif it <= 5000:
             optimizer.param_groups[0]['lr'] = 0.01
             optimizer.param_groups[1]['lr'] = 0.01
-            optimizer.param_groups[2]['lr'] = 0.01
+            # optimizer.param_groups[2]['lr'] = 0.01
         elif it <= 10000:
             optimizer.param_groups[0]['lr'] = 0.001
             optimizer.param_groups[1]['lr'] = 0.001
-            optimizer.param_groups[2]['lr'] = 0.001
+            # optimizer.param_groups[2]['lr'] = 0.001
         else:
             optimizer.param_groups[0]['lr'] = 0.0001
             optimizer.param_groups[1]['lr'] = 0.0001
-            optimizer.param_groups[2]['lr'] = 0.0001
+            # optimizer.param_groups[2]['lr'] = 0.0001
 
         epoch_list.append(epoch)
 
