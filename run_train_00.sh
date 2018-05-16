@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 DATA="cub"
-loss="nca"
+loss="triplet"
 checkpoints="/opt/intern/users/xunwang/checkpoints"
 r="_model.pkl"
 
@@ -16,8 +16,8 @@ DIM_list="512 64"
 for DIM in $DIM_list;do
     l=$checkpoints/$loss/$DATA/$DIM
     mkdir $checkpoints/$loss/$DATA/$DIM
-    CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -net vgg  -init orth  -lr 1e-5 -dim $DIM -alpha 16  -k 32   -BatchSize 64 -loss $loss  -epochs 301 -checkpoints $checkpoints -log_dir $loss/$DATA/$DIM  -save_step 50
-    Model_LIST="0 50 100 150 200 250 300"
+    CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -net vgg  -init orth  -lr 1e-3 -dim $DIM -alpha 16  -k 32   -BatchSize 64 -loss $loss  -epochs 601 -checkpoints $checkpoints -log_dir $loss/$DATA/$DIM  -save_step 50
+    Model_LIST="0 100 150 200 300 400 500 600"
     for i in $Model_LIST; do
         CUDA_VISIBLE_DEVICES=7  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM.txt
     done
