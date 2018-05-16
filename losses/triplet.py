@@ -7,6 +7,14 @@ from torch.autograd import Variable
 import numpy as np
 
 
+"""
+To Implement the Triplet Loss in paper : 
+Generalization in Metric Learning: Should the Embedding Layer be the Embedding Layer?
+https://arxiv.org/pdf/1803.03310.pdf
+"""
+
+
+
 class Triplet(nn.Module):
     def __init__(self, alpha=4):
         super(Triplet, self).__init__()
