@@ -42,7 +42,7 @@ class Triplet(nn.Module):
         neg_dist = neg_dist.resize(
             len(neg_dist) // num_neg_instances, num_neg_instances)
 
-        loss = list()
+        loss = 0
         acc_num = 0
         num_valid_triplets = 0
 
@@ -63,19 +63,19 @@ class Triplet(nn.Module):
                 acc_num += 1
                 continue
 
-            num_valid_triplets += torch.sum(triplet_mask).data[0]
-            loss_ = torch.mean(valid_triplets)
-            loss.append(loss_)
+            num_valid_triplets += torch.sum(triplet_mask).item()
+            loss += torch.mean(valid_triplets)
+
 
         # transverse all the valid triplets then average
         if num_valid_triplets == 0:
             loss = 0*torch.sum(pos_pair)
         else:
-            loss = (1/num_valid_triplets)*torch.sum(torch.cat(loss))
+            loss = loss/num_valid_triplets
 
         accuracy = float(acc_num)/n
-        neg_d = torch.mean(neg_dist).data[0]
-        pos_d = torch.mean(pos_dist).data[0]
+        neg_d = torch.mean(neg_dist).item()
+        pos_d = torch.mean(pos_dist).item()
 
         return loss, accuracy, pos_d, neg_d
 
