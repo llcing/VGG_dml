@@ -57,7 +57,7 @@ class Triplet(nn.Module):
             neg_pair = neg_pair.repeat((num_instances-1), 1).t()
 
             triplet_mat = torch.log(torch.exp(pos_pair - neg_pair) + 1)
-            triplet_mask = triplet_mat > 0.7
+            triplet_mask = triplet_mat > 0.693
             valid_triplets = torch.masked_select(triplet_mat, triplet_mask)
             if len(valid_triplets) == 0:
                 acc_num += 1
@@ -65,7 +65,6 @@ class Triplet(nn.Module):
 
             num_valid_triplets += torch.sum(triplet_mask).item()
             loss += torch.mean(valid_triplets)
-
 
         # transverse all the valid triplets then average
         if num_valid_triplets == 0:
