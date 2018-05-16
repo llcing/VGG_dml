@@ -66,7 +66,7 @@ def main(args):
     base_params = [p for p in model.parameters() if
                    id(p) not in new_param_ids]
     param_groups = [
-                {'params': base_params, 'lr_mult': 1.0},
+                {'params': base_params, 'lr_mult': 0.1},
                 {'params': new_params, 'lr_mult': 1.0}]
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
