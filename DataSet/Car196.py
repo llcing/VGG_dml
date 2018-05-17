@@ -23,7 +23,7 @@ class Car196:
                 transforms.Compose([
                     transforms.CovertBGR(),
                     transforms.Resize(256),
-                    transforms.CenterCrop(227),
+                    transforms.CenterCrop(224),
                     transforms.ToTensor(),
                     normalize,
                 ])]
