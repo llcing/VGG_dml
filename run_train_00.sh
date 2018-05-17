@@ -16,7 +16,7 @@ DIM_list="512 64"
 for DIM in $DIM_list;do
     l=$checkpoints/$loss/$DATA/$DIM
     mkdir $checkpoints/$loss/$DATA/$DIM
-    CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -net vgg  -init orth  -lr 1e-3 -dim $DIM -alpha 4  -k 32  -num_instances 6   -BatchSize 72 -loss $loss  -epochs 601 -checkpoints $checkpoints -log_dir $loss/$DATA/$DIM  -save_step 50
+    CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -net vgg  -init orth  -lr 1e-3 -dim $DIM -alpha 4  -k 32  -num_instances 2   -BatchSize 32 -loss $loss  -epochs 601 -checkpoints $checkpoints -log_dir $loss/$DATA/$DIM  -save_step 50
     Model_LIST="0 100 150 200 300 400 500 600"
     for i in $Model_LIST; do
         CUDA_VISIBLE_DEVICES=7  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM.txt
