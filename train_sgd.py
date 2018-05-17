@@ -94,7 +94,7 @@ def main(args):
     loss_list = list()
     pos_list = list()
     neg_list = list()
-    it = 0
+    it = 1
 
     for epoch in range(args.start, args.epochs):
         # learning rate scheduling
