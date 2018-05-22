@@ -10,6 +10,7 @@ import models
 import losses
 from utils import RandomIdentitySampler, mkdir_if_missing, logging, display, orth_reg
 import DataSet
+from DataSet import InShopClothes
 import numpy as np
 cudnn.benchmark = True
 
@@ -17,7 +18,7 @@ cudnn.benchmark = True
 def main(args):
 
     #  训练日志保存
-    log_dir = os.path.join(args.checkpoints, args.log_dir)
+    log_dir = args.log_dir
     mkdir_if_missing(log_dir)
 
     sys.stdout = logging.Logger(os.path.join(log_dir, 'log.txt'))
@@ -33,6 +34,7 @@ def main(args):
         model.features = torch.nn.Sequential(
             model.features,
             torch.nn.MaxPool2d(7),
+            # torch.nn.BatchNorm2d(512),
             torch.nn.Dropout(p=0.01)
         )
         model.classifier = torch.nn.Sequential(
@@ -41,15 +43,18 @@ def main(args):
 
         # # orth init
         if args.init == 'orth':
-             print('initialize the FC layer orthogonally')
-             w = model_dict['classifier.0.weight']
-             model_dict['classifier.0.weight'] = torch.nn.init.orthogonal_(w)
+            w = model_dict['classifier.0.weight']
+            model_dict['classifier.0.weight'] = torch.nn.init.orthogonal_(w)
+        else:
+            print('initialize the FC layer kaiming-ly')
+            w = model_dict['classifier.0.weight']
+            model_dict['classifier.0.weight'] = torch.nn.init.kaiming_normal_(w)
+
         # zero bias
-             model_dict['classifier.0.bias'] = torch.zeros(args.dim)
-        #
-        # model.load_state_dict(model_dict)
+        model_dict['classifier.0.bias'] = torch.zeros(args.dim)
     else:
         # resume model
+        print('Resume from model at Epoch %d' % args.start)
         model = torch.load(args.r)
 
     model = model.cuda()
@@ -82,12 +87,23 @@ def main(args):
         criterion = losses.create(args.loss, alpha=args.alpha, k=args.k).cuda()
     elif args.loss == 'triplet':
         criterion = losses.create(args.loss, alpha=args.alpha).cuda()
+    elif args.loss == 'bin':
+        criterion = losses.create(args.loss, margin=args.margin, alpha=args.alpha)
+    else:
+        criterion = losses.create(args.loss).cuda()
 
-    data = DataSet.create(args.data, root=None, test=False)
-    train_loader = torch.utils.data.DataLoader(
-        data.train, batch_size=args.BatchSize,
-        sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
-        drop_last=True, num_workers=args.nThreads)
+    if args.data == 'shop':
+        data = InShopClothes()
+        train_loader = torch.utils.data.DataLoader(
+            data, batch_size=args.BatchSize,
+            sampler=RandomIdentitySampler(data, num_instances=args.num_instances),
+            drop_last=True, num_workers=args.nThreads)
+    else:
+        data = DataSet.create(args.data, root=None, test=False)
+        train_loader = torch.utils.data.DataLoader(
+            data.train, batch_size=args.BatchSize,
+            sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
+            drop_last=True, num_workers=args.nThreads)
 
     # save the train information
     epoch_list = list()
@@ -102,6 +118,10 @@ def main(args):
         running_pos = 0.0
         running_neg = 0.0
 
+        if epoch == 1500:
+            optimizer = torch.optim.Adam(param_groups, lr=0.1*args.lr,
+                                         weight_decay=args.weight_decay)
+
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
             # wrap them in Variable
@@ -115,8 +135,6 @@ def main(args):
             embed_feat = model(inputs)
 
             loss, inter_, dist_ap, dist_an = criterion(embed_feat, labels)
-            if args.orth > 0:
-                loss = orth_reg(model, loss, cof=args.orth)
             loss.backward()
             optimizer.step()
 
@@ -126,7 +144,7 @@ def main(args):
 
             if epoch == 0 and i == 0:
                 print(50 * '#')
-                print('Train Begin -- HA-HA-HA-HA 55555 333')
+                print('Train Begin -- HA-HA-HA-HA-AH-AH-AH-AH --')
 
         loss_list.append(running_loss)
         pos_list.append(running_pos / i)
@@ -157,7 +175,7 @@ if __name__ == '__main__':
                         help='hyper parameter in some deep metric loss functions')
     parser.add_argument('-k', default=16, type=int, metavar='n',
                         help='number of neighbour points in KNN')
-    parser.add_argument('-margin', default=0.1, type=float,
+    parser.add_argument('-margin', default=0.5, type=float,
                         help='margin in loss function')
     parser.add_argument('-init', default='random',
                         help='the initialization way of FC layer')

@@ -51,13 +51,12 @@ class NCA(nn.Module):
             pair = torch.cat([pos_pair, neg_pair])
             threshold = torch.sort(pair)[0][self.K]
 
-            # 取出K近邻中的正样本对和负样本对
-            pos_neig = torch.masked_select(pos_pair, pos_pair < threshold)
+            # 取出K近邻中的负样本对
             neg_neig = torch.masked_select(neg_pair, neg_pair < threshold)
+            # pos_neig = torch.masked_select(pos_pair, pos_pair < threshold)
 
-            # 若前K个近邻中没有正样本，则仅取最近正样本
-            if len(pos_neig) == 0:
-                pos_neig = pos_pair[0]
+            # 取全部正样本对
+            pos_neig = pos_pair
 
             if i == 1 and np.random.randint(1024) == 1:
                 print('pos_pair is ---------', pos_neig)

@@ -15,7 +15,7 @@ class CUB200:
 
         if transform is None:
             transform = [transforms.Compose([
-                transforms.CovertBGR(),
+                # transforms.CovertBGR(),
                 transforms.Resize(256),
                 transforms.RandomResizedCrop(scale=(0.16, 1), size=224),
                 transforms.RandomHorizontalFlip(),
@@ -23,7 +23,7 @@ class CUB200:
                 normalize,
             ]),
                 transforms.Compose([
-                    transforms.CovertBGR(),
+                    # transforms.CovertBGR(),
                     transforms.Resize(256),
                     transforms.CenterCrop(224),
                     transforms.ToTensor(),

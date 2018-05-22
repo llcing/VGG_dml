@@ -43,9 +43,9 @@ if args.data == 'product':
     result = Recall_at_ks_products(sim_mat, query_ids=labels, gallery_ids=labels)
 else:
     result = Recall_at_ks(sim_mat, query_ids=labels, gallery_ids=labels)
-    result = ['%.4f' % r for r in result]
-    temp = '  '
-    result = temp.join(result)
-    print('Epoch-%s' % name, result)
+result = ['%.4f' % r for r in result]
+temp = '  '
+result = temp.join(result)
+print('Epoch-%s' % name, result)
 
 

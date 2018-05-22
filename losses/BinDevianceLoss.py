@@ -5,6 +5,18 @@ from torch import nn
 from torch.autograd import Variable
 import numpy as np
 
+"""
+Baseline loss function in BIER
+
+Deep Metric Learning with BIER: Boosting Independent Embeddings Robustly
+"""
+
+
+def normalize(x):
+    norm = x.norm(dim=1, p=2, keepdim=True)
+    x = x.div(norm.expand_as(x))
+    return x
+
 
 def similarity(inputs_):
     # Compute similarity mat of deep feature
@@ -20,6 +32,7 @@ class BinDevianceLoss(nn.Module):
         self.alpha = alpha
 
     def forward(self, inputs, targets):
+        inputs = normalize(inputs)
         n = inputs.size(0)
         # Compute similarity matrix
         sim_mat = similarity(inputs)
@@ -43,34 +56,34 @@ class BinDevianceLoss(nn.Module):
             len(neg_sim) // num_neg_instances, num_neg_instances)
 
         #  clear way to compute the loss first
-        loss = list()
+        loss = 0
         c = 0
 
+        base = np.max([torch.max(sim_mat) - 0.1, self.margin + 0.2])
+
+        # print(40*'#')
         for i, pos_pair in enumerate(pos_sim):
             # print(i)
             pos_pair = torch.sort(pos_pair)[0]
-            neg_pair = torch.sort(neg_sim[i])[0]
-
+            neg_pair = neg_sim[i]
             neg_pair = torch.masked_select(neg_pair, neg_pair > pos_pair[0] - 0.05)
+            pos_pair = torch.masked_select(pos_pair, pos_pair < base)
             # pos_pair = pos_pair[1:]
-            if len(neg_pair) < 1:
+            if len(neg_pair) < 2:
                 c += 1
-                continue
-
-            neg_pair = torch.sort(neg_pair)[0]
-
-            if i == 1 and np.random.randint(299) == 1:
-                print('neg_pair is ---------', neg_pair)
-                print('pos_pair is ---------', pos_pair.data)
+            # print(len(pos_pair))
+            # print(len(neg_pair))
             pos_loss = torch.mean(torch.log(1 + torch.exp(-2*(pos_pair - self.margin))))
-            neg_loss = 0.04*torch.mean(torch.log(1 + torch.exp(50*(neg_pair - self.margin))))
-            loss.append(pos_loss + neg_loss)
+            neg_loss = (float(2)/self.alpha) * torch.mean(torch.log(1 + torch.exp(self.alpha*(neg_pair - self.margin))))
+            loss_ = pos_loss + neg_loss
+            # print(pos_loss)
+            # print(neg_loss)
+            loss = loss + loss_
 
-        loss = torch.sum(torch.cat(loss))/n
-
+        loss = loss/n
         prec = float(c)/n
-        neg_d = torch.mean(neg_sim).data[0]
-        pos_d = torch.mean(pos_sim).data[0]
+        neg_d = torch.mean(neg_sim).item()
+        pos_d = torch.mean(pos_sim).item()
 
         return loss, prec, pos_d, neg_d
 
@@ -82,11 +95,10 @@ def main():
     num_class = 4
     # margin = 0.5
     x = Variable(torch.rand(data_size, input_dim), requires_grad=False)
-    # print(x)
     w = Variable(torch.rand(input_dim, output_dim), requires_grad=True)
-    inputs = x.mm(w)
+    inputs = x.mm(w).cuda()
     y_ = 8*list(range(num_class))
-    targets = Variable(torch.IntTensor(y_))
+    targets = Variable(torch.IntTensor(y_)).cuda()
 
     print(BinDevianceLoss()(inputs, targets))
 
