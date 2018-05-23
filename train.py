@@ -70,7 +70,7 @@ def main(args):
     base_params = [p for p in model.parameters() if
                    id(p) not in new_param_ids]
     param_groups = [
-                {'params': base_params, 'lr_mult': 0.01},
+                {'params': base_params, 'lr_mult': 0.0},
                 {'params': new_params, 'lr_mult': 1.0}]
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
@@ -112,9 +112,16 @@ def main(args):
 
         if epoch == 10:
             optimizer.param_groups[0]['lr_mul'] = 0.1
-        if epoch == 100:
-            optimizer['lr'] = 3e-6
+
+        if epoch == 200:
             optimizer.param_groups[0]['lr_mul'] = 1.0
+
+        if epoch == args.step_1:
+            param_groups = [
+                {'params': base_params, 'lr_mult': 1.0},
+                {'params': new_params, 'lr_mult': 1.0}]
+            optimizer = torch.optim.Adam(param_groups, lr=1e-6,
+                                         weight_decay=args.weight_decay)
 
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
@@ -206,6 +213,8 @@ if __name__ == '__main__':
                         help='number of data loading threads (default: 2)')
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight-decay', type=float, default=2e-4)
+    parser.add_argument('-step_1', type=int, default=600,
+                        help='learn rate /10')
 
     main(parser.parse_args())
 
