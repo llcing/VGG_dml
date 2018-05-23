@@ -7,7 +7,7 @@ __factory = {
     'cub': CUB200,
     'car': Car196,
     'product': Products,
-    'shop': In_shop_clothes,
+    'shop': InShopClothes,
 }
 
 

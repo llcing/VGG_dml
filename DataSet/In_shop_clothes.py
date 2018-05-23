@@ -1,3 +1,4 @@
+from __future__ import absolute_import, print_function
 """
 In-shop-clothes data-set for Pytorch
 """
@@ -6,7 +7,7 @@ import torch.utils.data as data
 from PIL import Image
 
 import os
-from DataSet import transforms
+from torchvision import transforms
 from collections import defaultdict
 
 
@@ -14,7 +15,7 @@ def default_loader(path):
     return Image.open(path).convert('RGB')
 
 
-class InShopClothes(data.Dataset):
+class MyData(data.Dataset):
     def __init__(self, root=None, label_txt=None,
                  transform=None, loader=default_loader):
 
@@ -44,6 +45,8 @@ class InShopClothes(data.Dataset):
         labels = []
 
         for img_anon in images_anon:
+            img_anon = img_anon.replace(' ', '\t')
+
             [img, label] = (img_anon.split('\t'))[:2]
             images.append(img)
             labels.append(int(label))
@@ -75,23 +78,63 @@ class InShopClothes(data.Dataset):
         return len(self.images)
 
 
+class InShopClothes:
+    def __init__(self, root=None, transform=None):
+        # Data loading code
+
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+
+        if transform is None:
+            transform = [transforms.Compose([
+                # transforms.CovertBGR(),
+                transforms.Resize(256),
+                transforms.RandomResizedCrop(scale=(0.16, 1), size=224),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                normalize,
+            ]),
+                transforms.Compose([
+                    # transforms.CovertBGR(),
+                    transforms.Resize(256),
+                    transforms.CenterCrop(224),
+                    transforms.ToTensor(),
+                    normalize,
+                ])]
+
+        if root is None:
+            root = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval'
+
+        train_txt = os.path.join(root, 'train.txt')
+        gallery_txt = os.path.join(root, 'gallery.txt')
+        query_txt = os.path.join(root, 'query.txt')
+
+        self.train = MyData(root, label_txt=train_txt, transform=transform[0])
+        self.gallery = MyData(root, label_txt=gallery_txt, transform=transform[1])
+        self.query = MyData(root, label_txt=query_txt, transform=transform[1])
+
+
 def testIn_Shop_Clothes():
-    dataloader = InShopClothes(root="/Users/wangxun/DataSet/In_shop_clothes_retrieval/",
-                           label_txt="/Users/wangxun/DataSet/In_shop_clothes_retrieval/train.txt")
-
-    # print('dataloader.getName', dataloader.getName())
-    print(dataloader.Index[3])
-
-    img_loader = torch.utils.data.DataLoader(
-        dataloader,
-        batch_size=4, shuffle=True, num_workers=2)
-
-    for index, batch in enumerate(img_loader):
-        # print(img)
-        print(batch)
-        if index == 1:
-            break
-            # print('label', label)
+    # dataloader = MyData(root="/Users/wangxun/DataSet/In_shop_clothes_retrieval/",
+    #                        label_txt="/Users/wangxun/DataSet/In_shop_clothes_retrieval/train.txt")
+    #
+    # # print('dataloader.getName', dataloader.getName())
+    # print(dataloader.Index[3])
+    #
+    # img_loader = torch.utils.data.DataLoader(
+    #     dataloader,
+    #     batch_size=4, shuffle=True, num_workers=2)
+    #
+    # for index, batch in enumerate(img_loader):
+    #     # print(img)
+    #     print(batch)
+    #     if index == 1:
+    #         break
+    #         # print('label', label)
+    data = InShopClothes()
+    print(len(data.gallery))
+    print(len(data.query))
+    print(len(data.train))
 
 
 if __name__ == "__main__":

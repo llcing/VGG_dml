@@ -67,19 +67,32 @@ def pairwise_distance(features, metric=None):
     return dist
 
 
-def pairwise_similarity(features):
-    n = len(features)
-    x = torch.cat(features)
-    x = x.view(n, -1)
-    # print(4*'\n', x.size())
-    similarity = torch.mm(x, x.t()) - 1e5 * torch.eye(n)
-    return similarity
+def pairwise_similarity(x, y=None):
 
-#
-# features = torch.round(2*torch.rand(4, 2))
-# print(features)
-# distmat = pairwise_similarity(features)
-# distmat = to_numpy(distmat)
-# indices = np.argsort(distmat, axis=1)
-# print(distmat)
-# print(indices)
+    if y is None:
+        
+        n = len(x)
+        x = torch.cat(x)
+        x = x.view(n, -1)
+        x = normalize(x)
+        # print(4*'\n', x.size())
+        similarity = torch.mm(x, x.t()) - 1e5 * torch.eye(n)
+        return similarity
+        
+    else:
+
+        m = len(y)
+        y = torch.cat(y)
+        y = y.view(m, -1)
+        y = normalize(y)
+
+        n = len(x)
+        x = torch.cat(x)
+        x = x.view(n, -1)
+        x = normalize(x)
+
+        similarity = torch.mm(x, y.t())
+        return similarity
+        
+    
+    

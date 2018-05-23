@@ -64,20 +64,22 @@ class BinDevianceLoss(nn.Module):
         # print(40*'#')
         for i, pos_pair in enumerate(pos_sim):
             # print(i)
-            pos_pair = torch.sort(pos_pair)[0]
-            neg_pair = neg_sim[i]
-            neg_pair = torch.masked_select(neg_pair, neg_pair > pos_pair[0] - 0.05)
-            pos_pair = torch.masked_select(pos_pair, pos_pair < base)
-            # pos_pair = pos_pair[1:]
-            if len(neg_pair) < 2:
+            pos_pair_ = torch.sort(pos_pair)[0]
+            neg_pair_ = torch.sort(neg_sim[i])[0]
+            neg_pair = torch.masked_select(neg_pair_, neg_pair_ > pos_pair_[0] - 0.05)
+            pos_pair = torch.masked_select(pos_pair_, pos_pair_ < base)
+
+            # for train stability
+            if len(neg_pair) < 1:
                 c += 1
-            # print(len(pos_pair))
-            # print(len(neg_pair))
+                neg_pair = neg_pair_[-1]
+
+            if len(pos_pair) < 1:
+                pos_pair = pos_pair_[0]
+
             pos_loss = torch.mean(torch.log(1 + torch.exp(-2*(pos_pair - self.margin))))
             neg_loss = (float(2)/self.alpha) * torch.mean(torch.log(1 + torch.exp(self.alpha*(neg_pair - self.margin))))
             loss_ = pos_loss + neg_loss
-            # print(pos_loss)
-            # print(neg_loss)
             loss = loss + loss_
 
         loss = loss/n

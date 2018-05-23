@@ -2,32 +2,34 @@
 from __future__ import absolute_import
 import heapq
 import numpy as np
-import random
 from utils import to_numpy
+import time
+import random
 
 
-def Recall_at_ks(sim_mat, query_ids=None, gallery_ids=None):
+def Recall_at_ks(sim_mat, k_s=None, query_ids=None, gallery_ids=None):
+    start_time = time.time()
+    print(start_time)
     """
     :param sim_mat:
     :param query_ids
     :param gallery_ids
 
-    for the Deep Metric problem, following the evaluation table of Proxy NCA loss
-    only compute the [R@1, R@2, R@4, R@8]
-
-    fast computation via heapq
-
+    Compute  [R@1, R@2, R@4, R@8]
     """
+    if k_s is None:
+        k_s = [1, 2, 4, 8]
+
     sim_mat = to_numpy(sim_mat)
     m, n = sim_mat.shape
-    num_max = int(1e4)
-    # Fill up default values
     gallery_ids = np.asarray(gallery_ids)
     if query_ids is None:
-        query_ids = np.arange(m)
-    if gallery_ids is None:
-        gallery_ids = np.arange(n)
-    # Ensure numpy array
+        query_ids = gallery_ids
+    else:
+        query_ids = np.asarray(query_ids)
+
+    num_max = int(1e4)
+
     if m > num_max:
         samples = list(range(m))
         random.shuffle(samples)
@@ -35,82 +37,50 @@ def Recall_at_ks(sim_mat, query_ids=None, gallery_ids=None):
         sim_mat = sim_mat[samples, :]
         query_ids = [query_ids[k] for k in samples]
         m = num_max
-    else:
-        query_ids = np.asarray(query_ids)
 
-    # Sort and find correct matches
-    # indice = np.argsort(sim_mat, axis=1)
-    num_valid = np.zeros(4)
+    num_valid = np.zeros(len(k_s))
     for i in range(m):
+        if i % 1000 == 0:
+            print(i)
         x = sim_mat[i]
-        indice = heapq.nlargest(8, range(len(x)), x.take)
+        indice = heapq.nlargest(k_s[-1], range(len(x)), x.take)
+
         if query_ids[i] == gallery_ids[indice[0]]:
             num_valid += 1
-        elif query_ids[i] == gallery_ids[indice[1]]:
-            num_valid[1:] += 1
-        elif query_ids[i] in gallery_ids[indice[1:4]]:
-            num_valid[2:] += 1
-        elif query_ids[i] in gallery_ids[indice[4:]]:
-            num_valid[3:] += 1
-    return num_valid/float(m)
+            continue
+
+        for k in range(len(k_s) - 1):
+            if query_ids[i] in gallery_ids[indice[k_s[k]: k_s[k + 1]]]:
+                num_valid[(k + 1):] += 1
+                break
+    print(time.time())
+    t = time.time() - start_time
+    print(t)
+    return num_valid / float(m)
 
 
 def Recall_at_ks_products(sim_mat, query_ids=None, gallery_ids=None):
     """
-    :param sim_mat:
-    :param query_ids
-    :param gallery_ids
-
-    for the Deep Metric problem, following the evaluation table of Proxy NCA loss
-    only compute the [R@1, R@10, R@100]
-
-    fast computation via heapq
-
+    Compute [R@1, R@10, R@100] for stanford on-line Product
     """
-    sim_mat = to_numpy(sim_mat)
-    m, n = sim_mat.shape
-    num_max = int(1e4)
-    # Fill up default values
-    gallery_ids = np.asarray(gallery_ids)
-    if query_ids is None:
-        query_ids = np.arange(m)
-    if gallery_ids is None:
-        gallery_ids = np.arange(n)
-    # Ensure numpy array
-    if m > num_max:
-        samples = list(range(m))
-        random.shuffle(samples)
-        samples = samples[:num_max]
-        sim_mat = sim_mat[samples, :]
-        query_ids = [query_ids[k] for k in samples]
-        m = num_max
-    else:
-        query_ids = np.asarray(query_ids)
-
-    # Sort and find correct matches
-    # indice = np.argsort(sim_mat, axis=1)
-    num_valid = np.zeros(4)
-    for i in range(m):
-        x = sim_mat[i]
-        indice = heapq.nlargest(1000, range(len(x)), x.take)
-        if query_ids[i] == gallery_ids[indice[0]]:
-            num_valid += 1
-        elif query_ids[i] in gallery_ids[indice[1:10]]:
-            num_valid[1:] += 1
-        elif query_ids[i] in gallery_ids[indice[10:100]]:
-            num_valid[2:] += 1
-        elif query_ids[i] in gallery_ids[indice[100:]]:
-            num_valid[3] += 1
-    return num_valid/float(m)
+    return Recall_at_ks(sim_mat, query_ids=query_ids, gallery_ids=gallery_ids, k_s=[1, 10, 100])
 
 
-def main():
+def Recall_at_ks_shop(sim_mat, query_ids=None, gallery_ids=None):
+    """
+    Compute [R@1, R@10, R@20, ..., R@50] for In-shop-clothes
+    """
+    return Recall_at_ks(sim_mat, query_ids=query_ids,
+                        gallery_ids=gallery_ids, k_s=[1, 10, 20, 30, 40, 50])
+
+
+def test():
     import torch
     sim_mat = torch.rand(int(7e4), int(7*400))
     sim_mat = to_numpy(sim_mat)
     query_ids = int(1e4)*list(range(7))
     gallery_ids = int(1e3)*list(range(7))
-    print(Recall_at_ks(sim_mat, query_ids, gallery_ids))
+    print(Recall_at_ks_shop(sim_mat, query_ids, gallery_ids))
 
 if __name__ == '__main__':
-    main()
+    test()

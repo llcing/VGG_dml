@@ -8,9 +8,8 @@ from torch.backends import cudnn
 from torch.autograd import Variable
 import models
 import losses
-from utils import RandomIdentitySampler, mkdir_if_missing, logging, display, orth_reg
+from utils import RandomIdentitySampler, mkdir_if_missing, logging, display
 import DataSet
-from DataSet import InShopClothes
 import numpy as np
 cudnn.benchmark = True
 
@@ -71,7 +70,7 @@ def main(args):
     base_params = [p for p in model.parameters() if
                    id(p) not in new_param_ids]
     param_groups = [
-                {'params': base_params, 'lr_mult': 0.1},
+                {'params': base_params, 'lr_mult': 0.01},
                 {'params': new_params, 'lr_mult': 1.0}]
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
@@ -92,18 +91,11 @@ def main(args):
     else:
         criterion = losses.create(args.loss).cuda()
 
-    if args.data == 'shop':
-        data = InShopClothes()
-        train_loader = torch.utils.data.DataLoader(
-            data, batch_size=args.BatchSize,
-            sampler=RandomIdentitySampler(data, num_instances=args.num_instances),
-            drop_last=True, num_workers=args.nThreads)
-    else:
-        data = DataSet.create(args.data, root=None, test=False)
-        train_loader = torch.utils.data.DataLoader(
-            data.train, batch_size=args.BatchSize,
-            sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
-            drop_last=True, num_workers=args.nThreads)
+    data = DataSet.create(args.data, root=None)
+    train_loader = torch.utils.data.DataLoader(
+        data.train, batch_size=args.BatchSize,
+        sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
+        drop_last=True, num_workers=args.nThreads)
 
     # save the train information
     epoch_list = list()
@@ -118,9 +110,11 @@ def main(args):
         running_pos = 0.0
         running_neg = 0.0
 
-        if epoch == 1500:
-            optimizer = torch.optim.Adam(param_groups, lr=0.1*args.lr,
-                                         weight_decay=args.weight_decay)
+        if epoch == 10:
+            optimizer.param_groups[0]['lr_mul'] = 0.1
+        if epoch == 100:
+            optimizer['lr'] = 3e-6
+            optimizer.param_groups[0]['lr_mul'] = 1.0
 
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
@@ -135,6 +129,10 @@ def main(args):
             embed_feat = model(inputs)
 
             loss, inter_, dist_ap, dist_an = criterion(embed_feat, labels)
+            if not type(loss) == torch.Tensor:
+                print('One time con not back-ward')
+                continue
+
             loss.backward()
             optimizer.step()
 
