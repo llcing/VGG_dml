@@ -123,6 +123,13 @@ def main(args):
             optimizer = torch.optim.Adam(param_groups, lr=1e-6,
                                          weight_decay=args.weight_decay)
 
+        if epoch == 600:
+            param_groups = [
+                {'params': base_params, 'lr_mult': 0.1},
+                {'params': new_params, 'lr_mult': 1.0}]
+            optimizer = torch.optim.Adam(param_groups, lr=1e-6,
+                                         weight_decay=args.weight_decay)
+
         for i, data in enumerate(train_loader, 0):
             inputs, labels = data
             # wrap them in Variable
@@ -213,7 +220,7 @@ if __name__ == '__main__':
                         help='number of data loading threads (default: 2)')
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight-decay', type=float, default=2e-4)
-    parser.add_argument('-step_1', type=int, default=600,
+    parser.add_argument('-step_1', type=int, default=250,
                         help='learn rate /10')
 
     main(parser.parse_args())
