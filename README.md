@@ -37,7 +37,7 @@
   
   for the experiments, we split 59,551 images of 11,318 classes for training and 60,502 images of 11,316 classes for testing
   
- - [In-Shop-clothes]()
+ - [In-Shop-clothes]
 
   After downloading all the three data file, you should precess them as above, and put the directionary named DataSet in the project.
   We provide a script to precess CUB( Deep_Metric/DataSet/split_dataset.py ) Car and Stanford online products.
