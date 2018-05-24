@@ -18,6 +18,7 @@
 - BinDevianceLoss
 
     Self - Modified Version with better performance
+    
     Baseline method in BIER(Deep Metric Learning with BIER: Boosting Independent Embeddings Robustly)
 
 - NCA Loss
