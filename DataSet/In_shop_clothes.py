@@ -79,7 +79,7 @@ class MyData(data.Dataset):
 
 
 class InShopClothes:
-    def __init__(self, root=None, transform=None):
+    def __init__(self, root=None, transform=None, crop=True):
         # Data loading code
 
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -102,12 +102,16 @@ class InShopClothes:
                     normalize,
                 ])]
 
-        if root is None:
+        if crop:
+            root = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval/cropIms'
+        else:
             root = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval'
 
-        train_txt = os.path.join(root, 'train.txt')
-        gallery_txt = os.path.join(root, 'gallery.txt')
-        query_txt = os.path.join(root, 'query.txt')
+        root_ = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval'
+
+        train_txt = os.path.join(root_, 'train.txt')
+        gallery_txt = os.path.join(root_, 'gallery.txt')
+        query_txt = os.path.join(root_, 'query.txt')
 
         self.train = MyData(root, label_txt=train_txt, transform=transform[0])
         self.gallery = MyData(root, label_txt=gallery_txt, transform=transform[1])
@@ -115,22 +119,6 @@ class InShopClothes:
 
 
 def testIn_Shop_Clothes():
-    # dataloader = MyData(root="/Users/wangxun/DataSet/In_shop_clothes_retrieval/",
-    #                        label_txt="/Users/wangxun/DataSet/In_shop_clothes_retrieval/train.txt")
-    #
-    # # print('dataloader.getName', dataloader.getName())
-    # print(dataloader.Index[3])
-    #
-    # img_loader = torch.utils.data.DataLoader(
-    #     dataloader,
-    #     batch_size=4, shuffle=True, num_workers=2)
-    #
-    # for index, batch in enumerate(img_loader):
-    #     # print(img)
-    #     print(batch)
-    #     if index == 1:
-    #         break
-    #         # print('label', label)
     data = InShopClothes()
     print(len(data.gallery))
     print(len(data.query))

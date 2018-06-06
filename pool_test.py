@@ -29,33 +29,48 @@ model = model.cuda()
 # print(model)
 temp = args.r.split('/')
 name = temp[-1][:-10]
+
 if args.data == 'shop':
     data = DataSet.create(args.data)
     gallery_loader = torch.utils.data.DataLoader(
-        data.gallery, batch_size=32, shuffle=False, drop_last=False)
+        data.gallery, batch_size=64, shuffle=False, drop_last=False)
     query_loader = torch.utils.data.DataLoader(
-        data.query, batch_size=32, shuffle=False, drop_last=False)
+        data.query, batch_size=64, shuffle=False, drop_last=False)
 
-    gallery_feature, gallery_labels = extract_features(model, gallery_loader, print_freq=10, metric=None)
-    query_feature, query_labels = extract_features(model, query_loader, print_freq=10, metric=None)
+    gallery_feature, gallery_labels = extract_features(model, gallery_loader, print_freq=1e5, metric=None)
+    query_feature, query_labels = extract_features(model, query_loader, print_freq=1e5, metric=None)
 
     sim_mat = pairwise_similarity(x=query_feature, y=gallery_feature)
     result = Recall_at_ks_shop(sim_mat, query_ids=query_labels, gallery_ids=gallery_labels)
+
+elif args.data == 'jd':
+    if args.test == 1:
+        data = DataSet.create(args.data)
+        data_loader = torch.utils.data.DataLoader(
+            data.gallery, batch_size=64, shuffle=False, drop_last=False)
+    else:
+        data = DataSet.create(args.data)
+        data_loader = torch.utils.data.DataLoader(
+            data.gallery, batch_size=64, shuffle=False, drop_last=False)
+    features, labels = extract_features(model, data_loader, print_freq=1e5, metric=None)
+
+    sim_mat = -pairwise_distance(features)
+    result = Recall_at_ks(sim_mat, query_ids=labels, gallery_ids=labels)
 
 else:
     if args.test == 1:
         data = DataSet.create(args.data, train=False)
         data_loader = torch.utils.data.DataLoader(
-            data.test, batch_size=32, shuffle=False, drop_last=False)
+            data.test, batch_size=64, shuffle=False, drop_last=False)
     else:
         data = DataSet.create(args.data, test=False)
         data_loader = torch.utils.data.DataLoader(
-            data.train, batch_size=32, shuffle=False, drop_last=False)
-    features, labels = extract_features(model, data_loader, print_freq=int(1e5), metric=None)
+            data.train, batch_size=64, shuffle=False, drop_last=False)
+    features, labels = extract_features(model, data_loader, print_freq=1e5, metric=None)
 
     num_class = len(set(labels))
 
-    sim_mat = - pairwise_distance(features)
+    sim_mat = -pairwise_distance(features)
     if args.data == 'product':
         result = Recall_at_ks_products(sim_mat, query_ids=labels, gallery_ids=labels)
     else:
@@ -65,5 +80,4 @@ result = ['%.4f' % r for r in result]
 temp = '  '
 result = temp.join(result)
 print('Epoch-%s' % name, result)
-
 

@@ -28,6 +28,7 @@ def extract_features(model, data_loader, print_freq=1, metric=None):
     labels = list()
     end = time.time()
     for i, (imgs, pids) in enumerate(data_loader):
+        # print(imgs.shape)
         data_time.update(time.time() - end)
         # print(imgs.size())
         outputs = extract_cnn_feature(model, imgs)
@@ -75,8 +76,7 @@ def pairwise_similarity(x, y=None):
         x = torch.cat(x)
         x = x.view(n, -1)
         x = normalize(x)
-        # print(4*'\n', x.size())
-        similarity = torch.mm(x, x.t()) - 1e5 * torch.eye(n)
+        similarity = torch.mm(x, x.t()) - torch.eye(n)
         return similarity
         
     else:
@@ -92,6 +92,7 @@ def pairwise_similarity(x, y=None):
         x = normalize(x)
 
         similarity = torch.mm(x, y.t())
+        similarity = similarity
         return similarity
         
     

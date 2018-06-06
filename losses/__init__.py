@@ -32,6 +32,9 @@ from .Grad_NCA import Grad_NCA
 from .CenterNCALoss import CenterNCALoss
 from .ClusterNCALoss import ClusterNCALoss
 from .MCALoss import MCALoss
+from .DecorLoss import DecorLoss
+from .OriBinLoss import OriBinLoss
+from .DivergenceLoss import DivergenceLoss
 
 __factory = {
     'softneig': SoftmaxNeigLoss,
@@ -63,6 +66,9 @@ __factory = {
     'center-nca': CenterNCALoss,
     'cluster-nca': ClusterNCALoss,
     'mca': MCALoss,
+    'div': DivergenceLoss,
+    'decor': DecorLoss,
+    'ori_bin': OriBinLoss,
 }
 
 

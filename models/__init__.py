@@ -1,10 +1,12 @@
 from __future__ import print_function, absolute_import
 from .BN_Inception import BNInception
 from .VGG import vgg16_bn
+from .VGG_attention import vgg_attention
 
 __factory = {
     'bn': BNInception,
     'vgg': vgg16_bn,
+    'vgg_attention': vgg_attention,
 }
 
 

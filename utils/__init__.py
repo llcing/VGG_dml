@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from .meters import *
-from .sampler import RandomIdentitySampler
+from .sampler import RandomIdentitySampler, FastRandomIdentitySampler
 import torch
 from .osutils import mkdir_if_missing
 from .orthogonal_regularizaton import orth_reg

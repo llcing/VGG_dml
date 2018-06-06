@@ -1,0 +1,35 @@
+Extract Features: [32/186]	Time 2.866 (2.922)	Data 2.776 (2.591)	
+Extract Features: [64/186]	Time 2.347 (2.737)	Data 2.258 (2.526)	
+Extract Features: [96/186]	Time 2.126 (2.550)	Data 2.038 (2.380)	
+Extract Features: [128/186]	Time 2.037 (2.429)	Data 1.949 (2.279)	
+Extract Features: [160/186]	Time 2.509 (2.415)	Data 2.421 (2.277)	
+0.37970542907714844
+Epoch-200 0.6435  0.7427  0.8282  0.8952
+Extract Features: [32/186]	Time 2.263 (2.532)	Data 2.174 (2.341)	
+Extract Features: [64/186]	Time 2.543 (2.499)	Data 2.453 (2.358)	
+Extract Features: [96/186]	Time 2.223 (2.491)	Data 2.126 (2.366)	
+Extract Features: [128/186]	Time 2.108 (2.495)	Data 2.016 (2.379)	
+Extract Features: [160/186]	Time 2.391 (2.462)	Data 2.302 (2.351)	
+0.4069836139678955
+Epoch-400 0.6447  0.7522  0.8341  0.8952
+Extract Features: [32/186]	Time 2.565 (2.583)	Data 2.478 (2.273)	
+Extract Features: [64/186]	Time 2.576 (2.553)	Data 2.488 (2.353)	
+Extract Features: [96/186]	Time 2.899 (2.539)	Data 2.812 (2.375)	
+Extract Features: [128/186]	Time 2.290 (2.546)	Data 2.202 (2.401)	
+Extract Features: [160/186]	Time 2.410 (2.527)	Data 2.323 (2.393)	
+0.32970690727233887
+Epoch-600 0.6264  0.7384  0.8187  0.8839
+Extract Features: [32/186]	Time 2.420 (2.610)	Data 2.332 (2.274)	
+Extract Features: [64/186]	Time 2.061 (2.517)	Data 1.973 (2.304)	
+Extract Features: [96/186]	Time 2.431 (2.495)	Data 2.343 (2.323)	
+Extract Features: [128/186]	Time 2.333 (2.456)	Data 2.246 (2.305)	
+Extract Features: [160/186]	Time 2.359 (2.450)	Data 2.272 (2.312)	
+0.5075368881225586
+Epoch-800 0.6107  0.7221  0.8108  0.8732
+Extract Features: [32/186]	Time 2.580 (2.608)	Data 2.486 (2.370)	
+Extract Features: [64/186]	Time 2.717 (2.555)	Data 2.629 (2.391)	
+Extract Features: [96/186]	Time 2.477 (2.531)	Data 2.388 (2.393)	
+Extract Features: [128/186]	Time 2.284 (2.509)	Data 2.198 (2.383)	
+Extract Features: [160/186]	Time 2.475 (2.510)	Data 2.388 (2.391)	
+0.23777508735656738
+Epoch-1000 0.5898  0.7097  0.7984  0.8672

@@ -1,6 +1,5 @@
 # coding : utf-8
 from __future__ import absolute_import
-import heapq
 import numpy as np
 from utils import to_numpy
 import time
@@ -8,7 +7,7 @@ import random
 
 
 def Recall_at_ks(sim_mat, k_s=None, query_ids=None, gallery_ids=None):
-    start_time = time.time()
+    # start_time = time.time()
     # print(start_time)
     """
     :param sim_mat:
@@ -28,7 +27,7 @@ def Recall_at_ks(sim_mat, k_s=None, query_ids=None, gallery_ids=None):
     else:
         query_ids = np.asarray(query_ids)
 
-    num_max = int(1e4)
+    num_max = int(1e6)
 
     if m > num_max:
         samples = list(range(m))
@@ -38,7 +37,7 @@ def Recall_at_ks(sim_mat, k_s=None, query_ids=None, gallery_ids=None):
         query_ids = [query_ids[k] for k in samples]
         m = num_max
 
-    # Hope to be much faster
+    # Hope to be much faster  yes!!
     num_valid = np.zeros(len(k_s))
     neg_nums = np.zeros(m)
     for i in range(m):
@@ -55,21 +54,8 @@ def Recall_at_ks(sim_mat, k_s=None, query_ids=None, gallery_ids=None):
         else:
             temp = np.sum(neg_nums < k)
             num_valid[i:] += temp - num_valid[i-1]
-
-    # print(neg_nums[:40])
-        # indice = heapq.nlargest(k_s[-1], range(len(x)), x.take)
-        #
-        # if query_ids[i] == gallery_ids[indice[0]]:
-        #     num_valid += 1
-        #     continue
-        #
-        # for k in range(len(k_s) - 1):
-        #     if query_ids[i] in gallery_ids[indice[k_s[k]: k_s[k + 1]]]:
-        #         num_valid[(k + 1):] += 1
-        #         break
-    # print(time.time())
-    t = time.time() - start_time
-    print(t)
+    # t = time.time() - start_time
+    # print(t)
     return num_valid / float(m)
 
 

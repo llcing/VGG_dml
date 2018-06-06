@@ -5,27 +5,38 @@ from torch.backends import cudnn
 from evaluations import extract_features
 import DataSet
 import numpy as np
-torch.cuda.set_device(1)
+from utils import RandomIdentitySampler, mkdir_if_missing, logging, display
+
+# torch.cuda.set_device(7)
 
 cudnn.benchmark = True
-r = '/opt/intern/users/xunwang/checkpoints/neighbour/car/2-0.05/500_model.pkl'
+r = '/opt/intern/users/xunwang/checkpoints/bin/cub/512/800_model.pkl'
 
-data = 'car'
-dim = 64
-
-# model = inception_v3(dropout=0.5)
+data = 'cub'
+dim = 512
 model = torch.load(r)
 model = model.cuda()
 
 data = DataSet.create(data, train=True)
-data_loader = torch.utils.data.DataLoader(
-    data.test, batch_size=8, shuffle=False, drop_last=False)
 
-features, labels = extract_features(model, data_loader, print_freq=32, metric=None)
+data_loader = torch.utils.data.DataLoader(
+    data.test, batch_size=64, shuffle=False,
+    sampler=RandomIdentitySampler(data.train, num_instances=32), drop_last=False)
+
+features, labels = extract_features(model, data_loader, print_freq=4, metric=None)
+
 features = [feature.resize_(1, dim) for feature in features]
 features = torch.cat(features)
 
-np.save('represent.npy', features.numpy())
+U, S, V = torch.svd(features)
+
+print(S)
+
+
+
+
+
+# np.save('represent.npy', features.numpy())
 
 
 

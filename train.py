@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import, print_function
+import time
 import argparse
 import os
 import sys
@@ -8,13 +9,27 @@ from torch.backends import cudnn
 from torch.autograd import Variable
 import models
 import losses
-from utils import RandomIdentitySampler, mkdir_if_missing, logging, display
+from utils import RandomIdentitySampler, FastRandomIdentitySampler, mkdir_if_missing, logging, display
 import DataSet
 import numpy as np
 cudnn.benchmark = True
 
 
+def set_bn_eval(m):
+    classname = m.__class__.__name__
+    if classname.find('BatchNorm') != -1:
+        m.eval()
+
+
+def save_model(model, filename):
+    state = model.state_dict()
+    for key in state:
+        state[key] = state[key].clone().cpu()
+    torch.save(state, filename)
+
+
 def main(args):
+    s_ = time.time()
 
     #  训练日志保存
     log_dir = args.log_dir
@@ -29,23 +44,14 @@ def main(args):
         model_dict = model.state_dict()
         # print(model_dict)
 
-        model = models.create(args.net, pretrained=True)
-        model.features = torch.nn.Sequential(
-            model.features,
-            torch.nn.MaxPool2d(7),
-            # torch.nn.BatchNorm2d(512),
-            torch.nn.Dropout(p=0.01)
-        )
-        model.classifier = torch.nn.Sequential(
-            torch.nn.Linear(512, args.dim)
-        )
+        model = models.create(args.net, pretrained=True, dim=args.dim)
 
-        # # orth init
+        # orthogonal init
         if args.init == 'orth':
             w = model_dict['classifier.0.weight']
             model_dict['classifier.0.weight'] = torch.nn.init.orthogonal_(w)
         else:
-            print('initialize the FC layer kaiming-ly')
+            print('initialize the FC layer kai-ming-ly')
             w = model_dict['classifier.0.weight']
             model_dict['classifier.0.weight'] = torch.nn.init.kaiming_normal_(w)
 
@@ -56,22 +62,31 @@ def main(args):
         print('Resume from model at Epoch %d' % args.start)
         model = torch.load(args.r)
 
+    model = torch.nn.DataParallel(model)
     model = model.cuda()
 
-    torch.save(model, os.path.join(log_dir, 'model.pkl'))
-    print('initial model is save at %s' % log_dir)
+    # freeze BN
+    if args.BN == 1:
+        print(40 * '#', 'BatchNorm frozen')
+        model.apply(set_bn_eval)
+    else:
+        print(40*'#', 'BatchNorm NOT frozen')
+    # Fine-tune the model: the learning rate for pre-trained parameter is 1/10
 
-    # fine tune the model: the learning rate for pre-trained parameter is 1/10
-    new_param_ids = set(map(id, model.classifier.parameters()))
+    new_param_ids = set(map(id, model.module.classifier.parameters()))
 
-    new_params = [p for p in model.parameters() if
+    new_params = [p for p in model.module.parameters() if
                   id(p) in new_param_ids]
 
-    base_params = [p for p in model.parameters() if
+    base_params = [p for p in model.module.parameters() if
                    id(p) not in new_param_ids]
+
     param_groups = [
                 {'params': base_params, 'lr_mult': 0.0},
                 {'params': new_params, 'lr_mult': 1.0}]
+
+    save_model(model, os.path.join(log_dir, 'model.pth'))
+    print('initial model is save at %s' % log_dir)
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
                                  weight_decay=args.weight_decay)
@@ -86,16 +101,24 @@ def main(args):
         criterion = losses.create(args.loss, alpha=args.alpha, k=args.k).cuda()
     elif args.loss == 'triplet':
         criterion = losses.create(args.loss, alpha=args.alpha).cuda()
-    elif args.loss == 'bin':
+    elif args.loss == 'bin' or args.loss == 'ori_bin':
         criterion = losses.create(args.loss, margin=args.margin, alpha=args.alpha)
     else:
         criterion = losses.create(args.loss).cuda()
 
+    # Decor_loss = losses.create('decor').cuda()
     data = DataSet.create(args.data, root=None)
-    train_loader = torch.utils.data.DataLoader(
-        data.train, batch_size=args.BatchSize,
-        sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
-        drop_last=True, num_workers=args.nThreads)
+
+    if args.data == 'shop' or args.data == 'jd':
+        train_loader = torch.utils.data.DataLoader(
+            data.train, batch_size=args.BatchSize,
+            sampler=FastRandomIdentitySampler(data.train, num_instances=args.num_instances),
+            drop_last=True, pin_memory=True, num_workers=args.nThreads)
+    else:
+        train_loader = torch.utils.data.DataLoader(
+            data.train, batch_size=args.BatchSize,
+            sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
+            drop_last=True, pin_memory=True, num_workers=args.nThreads)
 
     # save the train information
     epoch_list = list()
@@ -110,24 +133,18 @@ def main(args):
         running_pos = 0.0
         running_neg = 0.0
 
-        if epoch == 10:
+        if (epoch == 20 and args.data != 'shop') or (epoch == 1 and args.data in ['shop', 'jd']):
             optimizer.param_groups[0]['lr_mul'] = 0.1
 
-        if epoch == 200:
-            optimizer.param_groups[0]['lr_mul'] = 1.0
+        if (epoch == 1000 and args.data == 'car') or \
+                (epoch == 550 and args.data == 'cub') or \
+                (epoch == 100 and args.data in ['shop', 'jd']):
 
-        if epoch == args.step_1:
-            param_groups = [
-                {'params': base_params, 'lr_mult': 1.0},
-                {'params': new_params, 'lr_mult': 1.0}]
-            optimizer = torch.optim.Adam(param_groups, lr=1e-6,
-                                         weight_decay=args.weight_decay)
-
-        if epoch == 600:
             param_groups = [
                 {'params': base_params, 'lr_mult': 0.1},
                 {'params': new_params, 'lr_mult': 1.0}]
-            optimizer = torch.optim.Adam(param_groups, lr=1e-6,
+
+            optimizer = torch.optim.Adam(param_groups, lr=0.1*args.lr,
                                          weight_decay=args.weight_decay)
 
         for i, data in enumerate(train_loader, 0):
@@ -143,6 +160,11 @@ def main(args):
             embed_feat = model(inputs)
 
             loss, inter_, dist_ap, dist_an = criterion(embed_feat, labels)
+
+            # decor_loss = Decor_loss(embed_feat)
+
+            # loss += args.theta * decor_loss
+
             if not type(loss) == torch.Tensor:
                 print('One time con not back-ward')
                 continue
@@ -159,16 +181,17 @@ def main(args):
                 print('Train Begin -- HA-HA-HA-HA-AH-AH-AH-AH --')
 
         loss_list.append(running_loss)
-        pos_list.append(running_pos / i)
-        neg_list.append(running_neg / i)
+        pos_list.append(running_pos / (i+1))
+        neg_list.append(running_neg / (i+1))
 
         print('[Epoch %05d]\t Loss: %.3f \t Accuracy: %.3f \t Pos-Dist: %.3f \t Neg-Dist: %.3f'
               % (epoch + 1, running_loss, inter_, dist_ap, dist_an))
 
         if epoch % args.save_step == 0:
-            torch.save(model, os.path.join(log_dir, '%d_model.pkl' % epoch))
+            save_model(model, os.path.join(log_dir, '%d_model.pth' % epoch))
     np.savez(os.path.join(log_dir, "result.npz"), epoch=epoch_list, loss=loss_list, pos=pos_list, neg=neg_list)
-
+    t = time.time() - s_
+    print('training takes %.2f hour' % (t/3600))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Deep Metric Learning')
@@ -185,6 +208,8 @@ if __name__ == '__main__':
                         help='hyper parameter in NCA and its variants')
     parser.add_argument('-beta', default=0.1, type=float, metavar='n',
                         help='hyper parameter in some deep metric loss functions')
+    # parser.add_argument('-theta', default=0.1, type=float,
+    #                     help='hyper parameter coefficient for de-correlation loss')
     parser.add_argument('-k', default=16, type=int, metavar='n',
                         help='number of neighbour points in KNN')
     parser.add_argument('-margin', default=0.5, type=float,
@@ -195,9 +220,11 @@ if __name__ == '__main__':
                         help='the coefficient orthogonal regularized term')
 
     # network
+    parser.add_argument('-BN', default=1, type=int, required=True,metavar='N',
+                        help='Freeze BN if 1')
     parser.add_argument('-data', default='cub', required=True,
                         help='path to Data Set')
-    parser.add_argument('-net', default='bn')
+    parser.add_argument('-net', default='vgg')
     parser.add_argument('-loss', default='branch', required=True,
                         help='loss for training network')
     parser.add_argument('-epochs', default=600, type=int, metavar='N',
@@ -216,7 +243,7 @@ if __name__ == '__main__':
                         help='where the trained models save')
     parser.add_argument('-log_dir', default=None,
                         help='where the trained models save')
-    parser.add_argument('--nThreads', '-j', default=4, type=int, metavar='N',
+    parser.add_argument('--nThreads', '-j', default=16, type=int, metavar='N',
                         help='number of data loading threads (default: 2)')
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight-decay', type=float, default=2e-4)

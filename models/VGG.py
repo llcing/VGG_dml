@@ -139,7 +139,7 @@ def vgg13_bn(pretrained=False, **kwargs):
     return model
 
 
-def vgg16(pretrained=False, **kwargs):
+def vgg16(pretrained=False, dim=512, **kwargs):
     """VGG 16-layer model (configuration "D")
 
     Args:
@@ -150,10 +150,21 @@ def vgg16(pretrained=False, **kwargs):
     model = VGG(make_layers(cfg['D']), **kwargs)
     if pretrained:
         model.load_state_dict(model_zoo.load_url(model_urls['vgg16']))
+
+    model.features = torch.nn.Sequential(
+        model.features,
+        torch.nn.MaxPool2d(7),
+        # torch.nn.BatchNorm2d(512),
+        torch.nn.Dropout(p=0.01)
+    )
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Linear(512, dim)
+    )
+
     return model
 
 
-def vgg16_bn(pretrained=False, **kwargs):
+def vgg16_bn(pretrained=False, dim=512, **kwargs):
     """VGG 16-layer model (configuration "D") with batch normalization
 
     Args:
@@ -164,32 +175,19 @@ def vgg16_bn(pretrained=False, **kwargs):
     model = VGG(make_layers(cfg['D'], batch_norm=True), **kwargs)
     if pretrained:
         model.load_state_dict(torch.load(model_urls['vgg16_bn']))
+
+    model.features = torch.nn.Sequential(
+        model.features,
+        torch.nn.MaxPool2d(7),
+        # torch.nn.BatchNorm2d(512),
+        torch.nn.Dropout(p=0.01)
+    )
+    model.classifier = torch.nn.Sequential(
+        torch.nn.Linear(512, dim)
+    )
+
     return model
 
 
-def vgg19(pretrained=False, **kwargs):
-    """VGG 19-layer model (configuration "E")
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    if pretrained:
-        kwargs['init_weights'] = False
-    model = VGG(make_layers(cfg['E']), **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['vgg19']))
-    return model
 
 
-def vgg19_bn(pretrained=False, **kwargs):
-    """VGG 19-layer model (configuration 'E') with batch normalization
-
-    Args:
-        pretrained (bool): If True, returns a model pre-trained on ImageNet
-    """
-    if pretrained:
-        kwargs['init_weights'] = False
-    model = VGG(make_layers(cfg['E'], batch_norm=True), **kwargs)
-    if pretrained:
-        model.load_state_dict(model_zoo.load_url(model_urls['vgg19_bn']))
-    return model

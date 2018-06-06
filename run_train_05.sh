@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-DATA="car"
+DATA="shop"
 loss="bin"
 checkpoints="/opt/intern/users/xunwang/checkpoints"
 r="_model.pkl"
-#echo 'Batch Norm before FC test'
+
 mkdir $checkpoints
 mkdir $checkpoints/$loss/
 mkdir $checkpoints/$loss/$DATA/
@@ -12,14 +12,15 @@ mkdir result/
 mkdir result/$loss/
 mkdir result/$loss/$DATA/
 
-DIM_list="512"
-for DIM in $DIM_list;do
-    l=$checkpoints/$loss/$DATA/$DIM
-    mkdir $checkpoints/$loss/$DATA/$DIM
-    CUDA_VISIBLE_DEVICES=6   python train.py -data $DATA  -net vgg  -init random -lr 1e-5 -dim $DIM  -num_instances 5 -BatchSize 70 -loss $loss  -epochs 1001 -checkpoints $checkpoints -log_dir $l  -save_step 50
-    Model_LIST="200 400 600 800 1000"
-    for i in $Model_LIST; do
-        CUDA_VISIBLE_DEVICES=6  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-opt.txt
-        CUDA_VISIBLE_DEVICES=6  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-opt-pool.txt
-    done
+DIM="512"
+
+l=$checkpoints/$loss/$DATA/$DIM
+mkdir $l
+CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -BN 0  -init random  -lr 1e-5 -dim $DIM -alpha 40 -num_instances 4 -BatchSize 72 -loss $loss  -epochs 201 -checkpoints $checkpoints  -log_dir $l -save_step 5
+Model_LIST="40 60 80 100 120 140 160 180 200"
+for i in $Model_LIST; do
+    CUDA_VISIBLE_DEVICES=7  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM.txt
+    CUDA_VISIBLE_DEVICES=7  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-pool.txt
 done
+
+

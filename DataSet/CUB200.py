@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import os
 # import torchvision.transforms as transforms
 import torchvision.datasets as datasets
-from DataSet import transforms
+from torchvision import transforms
 
 
 class CUB200:
@@ -35,6 +35,8 @@ class CUB200:
 
         traindir = os.path.join(root, 'train')
         testdir = os.path.join(root, 'test')
+
+
         if train:
             self.train = datasets.ImageFolder(traindir, transform[0])
         if test:
