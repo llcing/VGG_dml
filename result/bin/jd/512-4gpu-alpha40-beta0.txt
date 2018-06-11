@@ -1,0 +1,44 @@
+Extract Features: [5/15]	Time 0.230 (8.448)	Data 0.000 (2.981)	
+Extract Features: [10/15]	Time 0.233 (4.339)	Data 0.000 (1.490)	
+Extract Features: [15/15]	Time 2.502 (3.121)	Data 0.000 (0.994)	
+Epoch-40 0.5978  0.6717  0.7450  0.7967
+Extract Features: [5/15]	Time 0.230 (8.597)	Data 0.000 (3.276)	
+Extract Features: [10/15]	Time 0.225 (4.414)	Data 0.000 (1.638)	
+Extract Features: [15/15]	Time 2.449 (3.168)	Data 0.000 (1.092)	
+Epoch-60 0.6050  0.6805  0.7422  0.7973
+Extract Features: [5/15]	Time 0.231 (8.686)	Data 0.000 (3.281)	
+Extract Features: [10/15]	Time 0.233 (4.459)	Data 0.000 (1.640)	
+Extract Features: [15/15]	Time 2.383 (3.193)	Data 0.000 (1.094)	
+Epoch-80 0.6152  0.6870  0.7490  0.8033
+Extract Features: [5/15]	Time 0.231 (8.529)	Data 0.000 (3.045)	
+Extract Features: [10/15]	Time 0.233 (4.380)	Data 0.000 (1.523)	
+Extract Features: [15/15]	Time 2.450 (3.145)	Data 0.000 (1.015)	
+Epoch-90 0.6200  0.6950  0.7550  0.8060
+Extract Features: [5/15]	Time 0.231 (8.560)	Data 0.000 (2.961)	
+Extract Features: [10/15]	Time 0.226 (4.395)	Data 0.000 (1.481)	
+Extract Features: [15/15]	Time 2.337 (3.147)	Data 0.000 (0.987)	
+Epoch-95 0.6275  0.6970  0.7562  0.8067
+Extract Features: [5/15]	Time 0.231 (8.806)	Data 0.000 (3.151)	
+Extract Features: [10/15]	Time 0.229 (4.518)	Data 0.000 (1.576)	
+Extract Features: [15/15]	Time 2.353 (3.231)	Data 0.000 (1.050)	
+Epoch-100 0.6228  0.6915  0.7548  0.8047
+Extract Features: [5/15]	Time 0.231 (8.686)	Data 0.000 (2.884)	
+Extract Features: [10/15]	Time 0.226 (4.458)	Data 0.000 (1.442)	
+Extract Features: [15/15]	Time 2.312 (3.188)	Data 0.000 (0.961)	
+Epoch-110 0.6288  0.6955  0.7580  0.8085
+Extract Features: [5/15]	Time 0.231 (19.544)	Data 0.000 (3.324)	
+Extract Features: [10/15]	Time 0.231 (9.887)	Data 0.000 (1.662)	
+Extract Features: [15/15]	Time 22.063 (8.124)	Data 0.000 (1.108)	
+Epoch-115 0.6245  0.6945  0.7570  0.8085
+Extract Features: [5/15]	Time 0.230 (9.275)	Data 0.000 (3.034)	
+Extract Features: [10/15]	Time 0.232 (4.754)	Data 0.000 (1.517)	
+Extract Features: [15/15]	Time 2.483 (3.395)	Data 0.000 (1.011)	
+Epoch-120 0.6258  0.6953  0.7545  0.8083
+Extract Features: [5/15]	Time 0.229 (8.984)	Data 0.000 (2.914)	
+Extract Features: [10/15]	Time 0.234 (4.607)	Data 0.000 (1.457)	
+Extract Features: [15/15]	Time 2.335 (3.289)	Data 0.000 (0.971)	
+Epoch-125 0.6280  0.6983  0.7570  0.8077
+Extract Features: [5/15]	Time 0.231 (8.560)	Data 0.000 (2.863)	
+Extract Features: [10/15]	Time 0.232 (4.396)	Data 0.000 (1.432)	
+Extract Features: [15/15]	Time 2.379 (3.150)	Data 0.000 (0.954)	
+Epoch-130 0.6292  0.6955  0.7578  0.8095

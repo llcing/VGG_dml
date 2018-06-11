@@ -22,7 +22,7 @@ class MyData(data.Dataset):
         # Initialization data path and train(gallery or query) txt path
 
         if root is None:
-            root = "/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval/"
+            root = "/home/xunwang"
             label_txt = os.path.join(root, 'train.txt')
 
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -69,6 +69,7 @@ class MyData(data.Dataset):
 
     def __getitem__(self, index):
         fn, label = self.images[index], self.labels[index]
+        # print(os.path.join(self.root, fn))
         img = self.loader(os.path.join(self.root, fn))
         if self.transform is not None:
             img = self.transform(img)
@@ -79,7 +80,7 @@ class MyData(data.Dataset):
 
 
 class InShopClothes:
-    def __init__(self, root=None, transform=None, crop=True):
+    def __init__(self, root=None, transform=None, crop=False):
         # Data loading code
 
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -105,7 +106,7 @@ class InShopClothes:
         if crop:
             root = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval/cropIms'
         else:
-            root = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval'
+            root = '/home/xunwang'
 
         root_ = '/opt/intern/users/xunwang/DataSet/In_shop_clothes_retrieval'
 
@@ -122,7 +123,7 @@ def testIn_Shop_Clothes():
     data = InShopClothes()
     print(len(data.gallery))
     print(len(data.query))
-    print(len(data.train))
+    print(data.train[1])
 
 
 if __name__ == "__main__":

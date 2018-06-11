@@ -9,7 +9,7 @@ from torch.backends import cudnn
 from torch.autograd import Variable
 import models
 import losses
-from utils import RandomIdentitySampler, FastRandomIdentitySampler, mkdir_if_missing, logging, display
+from utils import multi_gpu_load, FastRandomIdentitySampler, mkdir_if_missing, logging, display
 import DataSet
 import numpy as np
 cudnn.benchmark = True
@@ -36,15 +36,15 @@ def main(args):
     mkdir_if_missing(log_dir)
 
     sys.stdout = logging.Logger(os.path.join(log_dir, 'log.txt'))
+
     display(args)
 
+    model = models.create(args.net, pretrained=True, dim=args.dim)
+
     if args.r is None:
-        model = models.create(args.net)
         # load part of the model
         model_dict = model.state_dict()
         # print(model_dict)
-
-        model = models.create(args.net, pretrained=True, dim=args.dim)
 
         # orthogonal init
         if args.init == 'orth':
@@ -60,10 +60,10 @@ def main(args):
     else:
         # resume model
         print('Resume from model at Epoch %d' % args.start)
-        model = torch.load(args.r)
+        model.load_state_dict(multi_gpu_load(args.r))
 
-    model = torch.nn.DataParallel(model)
     model = model.cuda()
+    model = torch.nn.DataParallel(model)
 
     # freeze BN
     if args.BN == 1:
@@ -85,7 +85,7 @@ def main(args):
                 {'params': base_params, 'lr_mult': 0.0},
                 {'params': new_params, 'lr_mult': 1.0}]
 
-    save_model(model, os.path.join(log_dir, 'model.pth'))
+    # save_model(model, os.path.join(log_dir, 'model.pth'))
     print('initial model is save at %s' % log_dir)
 
     optimizer = torch.optim.Adam(param_groups, lr=args.lr,
@@ -101,58 +101,60 @@ def main(args):
         criterion = losses.create(args.loss, alpha=args.alpha, k=args.k).cuda()
     elif args.loss == 'triplet':
         criterion = losses.create(args.loss, alpha=args.alpha).cuda()
-    elif args.loss == 'bin' or args.loss == 'ori_bin':
-        criterion = losses.create(args.loss, margin=args.margin, alpha=args.alpha)
+    elif args.loss in ['bin', 'ori_bin', 'mbin']:
+        criterion = losses.create(args.loss, margin=args.margin, alpha=args.alpha, beta=args.beta)
     else:
         criterion = losses.create(args.loss).cuda()
 
     # Decor_loss = losses.create('decor').cuda()
     data = DataSet.create(args.data, root=None)
 
-    if args.data == 'shop' or args.data == 'jd':
-        train_loader = torch.utils.data.DataLoader(
-            data.train, batch_size=args.BatchSize,
-            sampler=FastRandomIdentitySampler(data.train, num_instances=args.num_instances),
-            drop_last=True, pin_memory=True, num_workers=args.nThreads)
-    else:
-        train_loader = torch.utils.data.DataLoader(
-            data.train, batch_size=args.BatchSize,
-            sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
-            drop_last=True, pin_memory=True, num_workers=args.nThreads)
+# if args.data in ['shop', 'jd', 'cub']:
+    train_loader = torch.utils.data.DataLoader(
+        data.train, batch_size=args.BatchSize,
+        sampler=FastRandomIdentitySampler(data.train, num_instances=args.num_instances),
+        drop_last=True, pin_memory=True, num_workers=args.nThreads)
+    # else:
+    #     train_loader = torch.utils.data.DataLoader(
+    #         data.train, batch_size=args.BatchSize,
+    #         sampler=RandomIdentitySampler(data.train, num_instances=args.num_instances),
+    #         drop_last=True, pin_memory=True, num_workers=args.nThreads)
 
     # save the train information
-    epoch_list = list()
-    loss_list = list()
-    pos_list = list()
-    neg_list = list()
+    epoch_list, iteration_list, loss_list, acc_list, pos_list, neg_list \
+        = list(), list(), list(), list(), list(), list()
 
+    iteration = 0
     for epoch in range(args.start, args.epochs):
         epoch_list.append(epoch)
 
         running_loss = 0.0
+        running_acc = 0.0
         running_pos = 0.0
         running_neg = 0.0
 
-        if (epoch == 20 and args.data != 'shop') or (epoch == 1 and args.data in ['shop', 'jd']):
+        if (epoch == 10 and args.data not in ['shop', 'jd']) or (epoch == 1 and args.data in ['shop', 'jd']):
             optimizer.param_groups[0]['lr_mul'] = 0.1
-
-        if (epoch == 1000 and args.data == 'car') or \
-                (epoch == 550 and args.data == 'cub') or \
-                (epoch == 100 and args.data in ['shop', 'jd']):
-
-            param_groups = [
-                {'params': base_params, 'lr_mult': 0.1},
-                {'params': new_params, 'lr_mult': 1.0}]
-
-            optimizer = torch.optim.Adam(param_groups, lr=0.1*args.lr,
-                                         weight_decay=args.weight_decay)
+        #
+        # if (epoch == 1000 and args.data == 'car') or \
+        #         (epoch == 1000 and args.data == 'cub') or \
+        #         (epoch == 100 and args.data in ['shop', 'jd']):
+        #
+        #     param_groups = [
+        #         {'params': base_params, 'lr_mult': 0.1},
+        #         {'params': new_params, 'lr_mult': 1.0}]
+        #
+        #     optimizer = torch.optim.Adam(param_groups, lr=0.1*args.lr,
+        #                                  weight_decay=args.weight_decay)
 
         for i, data in enumerate(train_loader, 0):
+            iteration_list.append(iteration)
+            iteration += 1
+
             inputs, labels = data
+
             # wrap them in Variable
             inputs = Variable(inputs.cuda())
-
-            # type of labels is Variable cuda.Longtensor
             labels = Variable(labels).cuda()
 
             optimizer.zero_grad()
@@ -160,36 +162,40 @@ def main(args):
             embed_feat = model(inputs)
 
             loss, inter_, dist_ap, dist_an = criterion(embed_feat, labels)
-
             # decor_loss = Decor_loss(embed_feat)
 
             # loss += args.theta * decor_loss
-
+            #
             if not type(loss) == torch.Tensor:
-                print('One time con not back-ward')
                 continue
 
             loss.backward()
+
             optimizer.step()
 
             running_loss += loss.item()
             running_neg += dist_an
             running_pos += dist_ap
+            running_acc += inter_
+
+            loss_list.append(loss.item())
+            pos_list.append(dist_ap)
+            neg_list.append(dist_an)
+            acc_list.append(inter_)
 
             if epoch == 0 and i == 0:
                 print(50 * '#')
                 print('Train Begin -- HA-HA-HA-HA-AH-AH-AH-AH --')
 
-        loss_list.append(running_loss)
-        pos_list.append(running_pos / (i+1))
-        neg_list.append(running_neg / (i+1))
-
         print('[Epoch %05d]\t Loss: %.3f \t Accuracy: %.3f \t Pos-Dist: %.3f \t Neg-Dist: %.3f'
-              % (epoch + 1, running_loss, inter_, dist_ap, dist_an))
+              % (epoch, running_loss/(i+1), running_acc/(i+1), running_pos/(i+1), running_neg/(i+1)))
 
         if epoch % args.save_step == 0:
             save_model(model, os.path.join(log_dir, '%d_model.pth' % epoch))
-    np.savez(os.path.join(log_dir, "result.npz"), epoch=epoch_list, loss=loss_list, pos=pos_list, neg=neg_list)
+
+    np.savez(os.path.join(log_dir, "result.npz"), itrations=iteration_list,
+             acc=acc_list, loss=loss_list, pos=pos_list, neg=neg_list)
+
     t = time.time() - s_
     print('training takes %.2f hour' % (t/3600))
 
@@ -206,7 +212,7 @@ if __name__ == '__main__':
                         help='dimension of embedding space')
     parser.add_argument('-alpha', default=30, type=int, metavar='n',
                         help='hyper parameter in NCA and its variants')
-    parser.add_argument('-beta', default=0.1, type=float, metavar='n',
+    parser.add_argument('-beta', default=0, type=float, metavar='n',
                         help='hyper parameter in some deep metric loss functions')
     # parser.add_argument('-theta', default=0.1, type=float,
     #                     help='hyper parameter coefficient for de-correlation loss')
@@ -243,7 +249,7 @@ if __name__ == '__main__':
                         help='where the trained models save')
     parser.add_argument('-log_dir', default=None,
                         help='where the trained models save')
-    parser.add_argument('--nThreads', '-j', default=16, type=int, metavar='N',
+    parser.add_argument('--nThreads', '-j', default=18, type=int, metavar='N',
                         help='number of data loading threads (default: 2)')
     parser.add_argument('--momentum', type=float, default=0.9)
     parser.add_argument('--weight-decay', type=float, default=2e-4)

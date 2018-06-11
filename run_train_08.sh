@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-DATA="jd"
+DATA="cub"
 loss="bin"
+net='vgg16'
 checkpoints="/opt/intern/users/xunwang/checkpoints"
-r="_model.pkl"
-#echo 'Batch Norm before FC test'
+r="_model.pth"
 mkdir $checkpoints
 mkdir $checkpoints/$loss/
 mkdir $checkpoints/$loss/$DATA/
@@ -12,20 +12,18 @@ mkdir result/
 mkdir result/$loss/
 mkdir result/$loss/$DATA/
 
-
-DIM="512"
-alpha_list="40"
-for alpha in $alpha_list;do
-    l=$checkpoints/$loss/$DATA/$DIM-BN-alpha$alpha
-#    pre=$l/70_model.pkl
-    mkdir $l
-    CUDA_VISIBLE_DEVICES=4,5,6   python train.py -data $DATA  -BN 1  -init random  -lr 1e-5 -dim $DIM -alpha $alpha -num_instances 2 -BatchSize 210 -loss $loss  -epochs 161 -checkpoints $checkpoints  -log_dir $l -save_step 5
-    Model_LIST="0 5 10 60 80 100 120 140 160"
-
-    for i in $Model_LIST; do
-        CUDA_VISIBLE_DEVICES=4  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-BN-alpha$alpha.txt
-#        CUDA_VISIBLE_DEVICES=1  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-BN-alpha$alpha-pool.txt
-    done
+lr_list="1e-5"
+for lr in $lr_list;do
+        l=$checkpoints/$loss/$DATA/Loss$loss-65-lr$lr-net$net
+#        resume=$l/350$r
+        mkdir $l
+#        CUDA_VISIBLE_DEVICES=2   python train.py -data $DATA -net $net  -BN 1  -init random  -lr $lr -num_instances 5 -BatchSize 65 -loss $loss  -epochs 601 -checkpoints $checkpoints  -log_dir $l -save_step 50
+        Model_LIST="0 100 200 250 300 350 400"
+#        Model_LIST="600 650 700 750 800 900 1000 1200"
+        for i in $Model_LIST; do
+#            CUDA_VISIBLE_DEVICES=1  python test.py -net $net -data $DATA -batch_size 100 -r $l/$i$r >>result/$loss/$DATA/Loss-$loss-128batchsize-Lr$lr-net$net.txt
+            CUDA_VISIBLE_DEVICES=1  python pool_test.py -net $net -data $DATA -batch_size 100 -r $l/$i$r >>result/$loss/$DATA/POOL-Loss-$loss-65batchsize-lr$lr-net$net.txt
+        done
 done
 
 

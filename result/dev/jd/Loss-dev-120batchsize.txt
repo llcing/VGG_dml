@@ -1,0 +1,22 @@
+Load Done!!
+Epoch-5 0.5138  0.5883  0.6683  0.7282
+Load Done!!
+Epoch-10 0.5300  0.6125  0.6895  0.7568
+Load Done!!
+Epoch-15 0.5443  0.6230  0.6885  0.7545
+Load Done!!
+Epoch-20 0.5605  0.6378  0.7090  0.7675
+Load Done!!
+Epoch-25 0.5750  0.6508  0.7153  0.7740
+Load Done!!
+Epoch-30 0.5530  0.6332  0.7025  0.7625
+Load Done!!
+Epoch-35 0.5580  0.6400  0.7090  0.7682
+Load Done!!
+Epoch-30 0.5450  0.6218  0.6973  0.7582
+Load Done!!
+Epoch-35 0.5447  0.6272  0.7050  0.7685
+Load Done!!
+Load Done!!
+Epoch-25 0.5397  0.6238  0.6963  0.7605
+Load Done!!

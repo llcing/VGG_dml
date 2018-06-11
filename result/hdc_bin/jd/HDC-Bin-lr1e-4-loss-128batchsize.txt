@@ -1,0 +1,16 @@
+Load Done!!
+torch.Size([4000, 384])
+transfer to cpu 39 / 40
+Extract Features: [40/40]	Time 0.283 (0.283)	Data 51.835 (51.835)	
+Epoch-0 0.3683  0.4345  0.5050  0.5700
+Load Done!!
+torch.Size([4000, 384])
+transfer to cpu 39 / 40
+Extract Features: [40/40]	Time 0.328 (0.328)	Data 32.960 (32.960)	
+Epoch-10 0.4280  0.5092  0.5897  0.6633
+Load Done!!
+torch.Size([4000, 384])
+transfer to cpu 39 / 40
+Extract Features: [40/40]	Time 0.319 (0.319)	Data 46.734 (46.734)	
+Epoch-20 0.4258  0.5090  0.5927  0.6733
+Load Done!!

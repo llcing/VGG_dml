@@ -6,9 +6,8 @@ import torch
 from utils import to_numpy
 import numpy as np
 
-# from .evaluation_metrics import cmc, mean_ap
 from utils.meters import AverageMeter
-from .cnn import extract_cnn_feature
+from evaluations.cnn import extract_cnn_feature
 
 
 def normalize(x):
@@ -22,40 +21,43 @@ def extract_features(model, data_loader, print_freq=1, metric=None):
     batch_time = AverageMeter()
     data_time = AverageMeter()
 
-    # features = OrderedDict()
-    # labels = OrderedDict()
-    features = list()
+    feature_cpu = torch.FloatTensor()
+    feature_gpu = torch.FloatTensor().cuda()
+
+    trans_inter = 1e4
     labels = list()
     end = time.time()
+
     for i, (imgs, pids) in enumerate(data_loader):
-        # print(imgs.shape)
-        data_time.update(time.time() - end)
-        # print(imgs.size())
         outputs = extract_cnn_feature(model, imgs)
-        # print(outputs.size())
-        for output, pid in zip(outputs, pids):
-            features.append(output)
-            labels.append(pid)
+        feature_gpu = torch.cat((feature_gpu, outputs), 0)
+        labels.extend(pids)
+        count = feature_gpu.size(0)
+        if count > trans_inter or i == len(data_loader)-1:
+            # print(feature_gpu.size())
+            data_time.update(time.time() - end)
+            end = time.time()
+            # print('transfer to cpu {} / {}'.format(i+1, len(data_loader)))
+            feature_cpu = torch.cat((feature_cpu, feature_gpu.cpu()), 0)
+            feature_gpu = torch.FloatTensor().cuda()
+            batch_time.update(time.time() - end)
+            # print('Extract Features: [{}/{}]\t'
+            #       'Time {:.3f} ({:.3f})\t'
+            #       'Data {:.3f} ({:.3f})\t'
+            #       .format(i + 1, len(data_loader),
+            #               batch_time.val, batch_time.avg,
+            #               data_time.val, data_time.avg))
 
-        batch_time.update(time.time() - end)
-        end = time.time()
+            end = time.time()
+        del outputs
 
-        if (i + 1) % print_freq == 0:
-            print('Extract Features: [{}/{}]\t'
-                  'Time {:.3f} ({:.3f})\t'
-                  'Data {:.3f} ({:.3f})\t'
-                  .format(i + 1, len(data_loader),
-                          batch_time.val, batch_time.avg,
-                          data_time.val, data_time.avg))
-    return features, labels
+    return feature_cpu, labels
 
 
 def pairwise_distance(features, metric=None):
-    n = len(features)
-    x = torch.cat(features)
-    x = x.view(n, -1)
+    n = features.size(0)
     # normalize feature before test
-    x = normalize(x)
+    x = normalize(features)
     # print(4*'\n', x.size())
     if metric is not None:
         x = metric.transform(x)
@@ -71,29 +73,15 @@ def pairwise_distance(features, metric=None):
 def pairwise_similarity(x, y=None):
 
     if y is None:
-        
-        n = len(x)
-        x = torch.cat(x)
-        x = x.view(n, -1)
+        n = x.size(0)
         x = normalize(x)
         similarity = torch.mm(x, x.t()) - torch.eye(n)
         return similarity
-        
     else:
-
-        m = len(y)
-        y = torch.cat(y)
-        y = y.view(m, -1)
         y = normalize(y)
-
-        n = len(x)
-        x = torch.cat(x)
-        x = x.view(n, -1)
         x = normalize(x)
-
         similarity = torch.mm(x, y.t())
-        similarity = similarity
         return similarity
-        
-    
-    
+
+
+

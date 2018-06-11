@@ -6,9 +6,14 @@ from torch import nn
 from torch.autograd import Variable
 import numpy as np
 
+def similarity(inputs_):
+    # Compute similarity mat of deep feature
+    sim = torch.matmul(inputs_, inputs_.t())
+    return sim
+
 
 class NCA(nn.Module):
-    def __init__(self, alpha=16, k=12, normalized=True):
+    def __init__(self, alpha=16, k=32, normalized=True):
         super(NCA, self).__init__()
         self.alpha = alpha
         self.K = k
@@ -18,8 +23,8 @@ class NCA(nn.Module):
         if self.normalized:
             inputs = normalize(inputs)
         n = inputs.size(0)
-        # Compute pairwise distance
-        dist_mat = euclidean_dist(inputs)
+        # Compute pairwise simance
+        sim = similarity(inputs)
         targets = targets.cuda()
         # split the positive and negative pairs
         eyes_ = Variable(torch.eye(n, n)).cuda()
@@ -28,55 +33,41 @@ class NCA(nn.Module):
         neg_mask = eyes_.eq(eyes_) - pos_mask
         pos_mask = pos_mask - eyes_.eq(1)
 
-        pos_dist = torch.masked_select(dist_mat, pos_mask)
-        neg_dist = torch.masked_select(dist_mat, neg_mask)
+        pos_sim = torch.masked_select(sim, pos_mask)
+        neg_sim = torch.masked_select(sim, neg_mask)
 
-        num_instances = len(pos_dist)//n + 1
+        num_instances = len(pos_sim)//n + 1
         num_neg_instances = n - num_instances
 
-        pos_dist = pos_dist.resize(len(pos_dist)//(num_instances-1), num_instances-1)
-        neg_dist = neg_dist.resize(
-            len(neg_dist) // num_neg_instances, num_neg_instances)
+        pos_sim = pos_sim.resize(len(pos_sim)//(num_instances-1), num_instances-1)
+        neg_sim = neg_sim.resize(
+            len(neg_sim) // num_neg_instances, num_neg_instances)
 
         loss = 0 
         acc_num = 0
 
-        for i, pos_pair in enumerate(pos_dist):
-            # pos_pair是以第i个样本为Anchor的所有正样本的距离
-            pos_pair = torch.sort(pos_pair)[0]
-            # neg_pair是以第i个样本为Anchor的所有负样本的距离
-            neg_pair = neg_dist[i]
+        for i, pos_pair in enumerate(pos_sim):
+            neg_pair = torch.sort(neg_sim[i])[0]            
+            neg_neig = neg_pair[-self.K:]
 
-            # 第K+1个近邻点到Anchor的距离值
-            pair = torch.cat([pos_pair, neg_pair])
-            threshold = torch.sort(pair)[0][self.K]
-
-            # 取出K近邻中的负样本对
-            neg_neig = torch.masked_select(neg_pair, neg_pair < threshold)
-            # pos_neig = torch.masked_select(pos_pair, pos_pair < threshold)
-
-            # 取全部正样本对
             pos_neig = pos_pair
-
+            
             if i == 1 and np.random.randint(1024) == 1:
                 print('pos_pair is ---------', pos_neig)
                 print('neg_pair is ---------', neg_neig)
-            base = torch.mean(dist_mat[i]).item()
-            # 计算logit, base的作用是防止超过计算机浮点数
+            base = (torch.min(sim[i]) + torch.max(sim[i])).item()/2
             pos_logit = torch.sum(torch.exp(self.alpha*(base - pos_neig)))
             neg_logit = torch.sum(torch.exp(self.alpha*(base - neg_neig)))
             loss_ = -torch.log(pos_logit/(pos_logit + neg_logit))
 
-            if loss_.item() < 0.6:
+            if torch.max(neg_pair) < torch.min(pos_pair):
                 acc_num += 1
-#            loss.append(loss_)
-        # 遍历所有样本为Anchor，对Loss取平均
-    #    loss = torch.mean(torch.Tensor(loss))
+
             loss = loss + loss_
         loss = loss/n
         accuracy = float(acc_num)/n
-        neg_d = torch.mean(neg_dist).item()
-        pos_d = torch.mean(pos_dist).item()
+        neg_d = torch.mean(neg_sim).item()
+        pos_d = torch.mean(pos_sim).item()
 
         return loss, accuracy, pos_d, neg_d
 
@@ -85,17 +76,6 @@ def normalize(x):
     norm = x.norm(dim=1, p=2, keepdim=True)
     x = x.div(norm.expand_as(x))
     return x
-
-
-def euclidean_dist(inputs_):
-    n = inputs_.size(0)
-    dist = torch.pow(inputs_, 2).sum(dim=1, keepdim=True).expand(n, n)
-    dist = dist + dist.t()
-    dist.addmm_(1, -2, inputs_, inputs_.t())
-    # for numerical stability
-    # dist = dist.clamp(min=1e-12).sqrt()
-    return dist
-
 
 def main():
     data_size = 32

@@ -1,0 +1,30 @@
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.015 (0.015)	Data 35.473 (35.473)	
+Epoch-40 0.5950  0.6643  0.7392  0.7975
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.066 (0.066)	Data 23.607 (23.607)	
+Epoch-80 0.6110  0.6840  0.7540  0.8140
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.013 (0.013)	Data 32.334 (32.334)	
+Epoch-100 0.6012  0.6795  0.7548  0.8113
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.014 (0.014)	Data 27.732 (27.732)	
+Epoch-120 0.5978  0.6770  0.7512  0.8110
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.151 (0.151)	Data 40.153 (40.153)	
+Epoch-140 0.5972  0.6760  0.7508  0.8123
+Load Done!!
+torch.Size([4000, 512])
+transfer to cpu 62 / 63
+Extract Features: [63/63]	Time 0.013 (0.013)	Data 34.692 (34.692)	
+Epoch-160 0.5907  0.6747  0.7505  0.8110

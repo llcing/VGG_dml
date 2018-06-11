@@ -6,6 +6,7 @@ import torch
 from torch.backends import cudnn
 from evaluations import extract_features, pairwise_similarity
 from evaluations import Recall_at_ks, Recall_at_ks_products, Recall_at_ks_shop
+from utils import multi_gpu_load
 import models
 import DataSet
 
@@ -23,13 +24,23 @@ parser.add_argument('-batch_size', type=int, default=64)
 parser.add_argument('--nThreads', '-j', default=16, type=int, metavar='N',
                     help='number of data loading threads (default: 2)')
 
+parser.add_argument('-net', default='vgg')
+
+
 args = parser.parse_args()
 
 PATH = args.r
-model = models.create('vgg', dim=args.dim, pretrained=False)
-model = torch.nn.DataParallel(model)
+if args.net == 'vgg':
+    model = models.create('vgg', dim=args.dim, pretrained=False)
+elif args.net == 'vgg16':
+    model = models.create('vgg16', dim=args.dim, pretrained=False)
+else:
+    model = models.create(args.net)
 
-model.load_state_dict(torch.load(PATH))
+model.load_state_dict(multi_gpu_load(PATH))
+# print('Load Done!!')
+
+model = torch.nn.DataParallel(model)
 
 model = model.cuda()
 # print(model)
@@ -37,8 +48,9 @@ temp = args.r.split('/')
 name = temp[-1][:-10]
 
 
+data = DataSet.create(args.data)
+
 if args.data == 'shop':
-    data = DataSet.create(args.data)
     gallery_loader = torch.utils.data.DataLoader(
         data.gallery, batch_size=args.batch_size, shuffle=False,
         drop_last=False, pin_memory=True, num_workers=args.nThreads)
@@ -46,7 +58,7 @@ if args.data == 'shop':
         data.query, batch_size=args.batch_size,
         shuffle=False, drop_last=False,
         pin_memory=True, num_workers=args.nThreads)
-    
+
     gallery_feature, gallery_labels = extract_features(model, gallery_loader, print_freq=1e5, metric=None)
     query_feature, query_labels = extract_features(model, query_loader, print_freq=1e5, metric=None)
 
@@ -55,13 +67,11 @@ if args.data == 'shop':
 
 elif args.data == 'jd':
     if args.test == 1:
-        data = DataSet.create(args.data)
         data_loader = torch.utils.data.DataLoader(
-            data.gallery, batch_size=args.batch_size, 
+            data.gallery, batch_size=args.batch_size,
             shuffle=False, drop_last=False, pin_memory=True,
             num_workers=args.nThreads)
     else:
-        data = DataSet.create(args.data)
         data_loader = torch.utils.data.DataLoader(
             data.gallery, batch_size=args.batch_size, shuffle=False, drop_last=False,
             pin_memory=True, num_workers=args.nThreads)
@@ -72,12 +82,10 @@ elif args.data == 'jd':
 
 else:
     if args.test == 1:
-        data = DataSet.create(args.data, train=False)
         data_loader = torch.utils.data.DataLoader(
             data.test, batch_size=args.batch_size, shuffle=False, drop_last=False,
             pin_memory=True, num_workers=args.nThreads)
     else:
-        data = DataSet.create(args.data, test=False)
         data_loader = torch.utils.data.DataLoader(
             data.train, batch_size=args.batch_size, shuffle=False, drop_last=False,
             pin_memory=True, num_workers=args.nThreads)
@@ -95,4 +103,5 @@ result = ['%.4f' % r for r in result]
 temp = '  '
 result = temp.join(result)
 print('Epoch-%s' % name, result)
+print('\n')
 

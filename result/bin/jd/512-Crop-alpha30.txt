@@ -22,3 +22,4 @@ Extract Features: [5/15]	Time 0.237 (8.478)	Data 0.000 (3.322)
 Extract Features: [10/15]	Time 0.236 (4.358)	Data 0.000 (1.661)	
 Extract Features: [15/15]	Time 1.572 (3.072)	Data 0.000 (1.108)	
 Epoch-160 0.6315  0.6993  0.7682  0.8190
+
