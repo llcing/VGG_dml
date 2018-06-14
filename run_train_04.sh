@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-DATA="jd"
-loss="hdc_bin"
-net='hdc'
+DATA="shop"
+loss="bin"
 checkpoints="/opt/intern/users/xunwang/checkpoints"
-r="_model.pth"
+r="_model.pkl"
+
 mkdir $checkpoints
 mkdir $checkpoints/$loss/
 mkdir $checkpoints/$loss/$DATA/
@@ -13,16 +13,15 @@ mkdir result/$loss/
 mkdir result/$loss/$DATA/
 
 
-lr_list="1e-4 1e-5 1e-3"
+DIM="512"
 
-for lr in $lr_list;do
-        l=$checkpoints/$loss/$DATA/HDC-Bin-Loss-128-lr$lr
-        mkdir $l
-#        CUDA_VISIBLE_DEVICES=4,5   python HDC_train.py -data $DATA -net $net  -BN 1  -init random  -lr $lr -num_instances 2 -BatchSize 128 -loss $loss -epochs 161 -checkpoints $checkpoints  -log_dir $l -save_step 5
-        Model_LIST="0 10 20 25 30 40 60 80 90 100 110 120 130 160"
-        for i in $Model_LIST; do
-            CUDA_VISIBLE_DEVICES=2  python test.py -net $net -data $DATA -batch_size 100 -r $l/$i$r >>result/$loss/$DATA/HDC-Bin-lr$lr-loss-128batchsize.txt
-        done
+l=$checkpoints/$loss/$DATA/$DIM-BN
+mkdir $l
+#CUDA_VISIBLE_DEVICES=4   python train.py -data $DATA  -BN 1  -init random  -lr 1e-5 -dim $DIM -alpha 40 -num_instances 4 -BatchSize 72 -loss $loss  -epochs 161 -checkpoints $checkpoints  -log_dir $l -save_step 5
+Model_LIST="140 160"
+for i in $Model_LIST; do
+    CUDA_VISIBLE_DEVICES=7  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-BN.txt
+#    CUDA_VISIBLE_DEVICES=4  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-BN-pool.txt
 done
 
 

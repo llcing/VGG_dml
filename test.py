@@ -6,9 +6,9 @@ import torch
 from torch.backends import cudnn
 from evaluations import extract_features, pairwise_similarity
 from evaluations import Recall_at_ks, Recall_at_ks_products, Recall_at_ks_shop
-from utils import multi_gpu_load
 import models
 import DataSet
+from utils.serialization import load_checkpoint
 
 cudnn.benchmark = True
 parser = argparse.ArgumentParser(description='PyTorch Testing')
@@ -24,29 +24,17 @@ parser.add_argument('-batch_size', type=int, default=64)
 parser.add_argument('--nThreads', '-j', default=16, type=int, metavar='N',
                     help='number of data loading threads (default: 2)')
 
-parser.add_argument('-net', default='vgg')
-
-
 args = parser.parse_args()
 
 PATH = args.r
-if args.net == 'vgg':
-    model = models.create('vgg', dim=args.dim, pretrained=False)
-elif args.net == 'vgg16':
-    model = models.create('vgg16', dim=args.dim, pretrained=False)
-else:
-    model = models.create(args.net)
+model = models.create('vgg', dim=args.dim, pretrained=False)
 
-model.load_state_dict(multi_gpu_load(PATH))
-# print('Load Done!!')
+resume = load_checkpoint(PATH)
+epoch = resume['epoch']
 
-model = torch.nn.DataParallel(model)
+model.load_state_dict(resume['state_dict'])
 
-model = model.cuda()
-# print(model)
-temp = args.r.split('/')
-name = temp[-1][:-10]
-
+model = torch.nn.DataParallel(model).cuda()
 
 data = DataSet.create(args.data)
 
@@ -58,7 +46,7 @@ if args.data == 'shop':
         data.query, batch_size=args.batch_size,
         shuffle=False, drop_last=False,
         pin_memory=True, num_workers=args.nThreads)
-
+    
     gallery_feature, gallery_labels = extract_features(model, gallery_loader, print_freq=1e5, metric=None)
     query_feature, query_labels = extract_features(model, query_loader, print_freq=1e5, metric=None)
 
@@ -66,15 +54,10 @@ if args.data == 'shop':
     result = Recall_at_ks_shop(sim_mat, query_ids=query_labels, gallery_ids=gallery_labels)
 
 elif args.data == 'jd':
-    if args.test == 1:
-        data_loader = torch.utils.data.DataLoader(
-            data.gallery, batch_size=args.batch_size,
-            shuffle=False, drop_last=False, pin_memory=True,
-            num_workers=args.nThreads)
-    else:
-        data_loader = torch.utils.data.DataLoader(
-            data.gallery, batch_size=args.batch_size, shuffle=False, drop_last=False,
-            pin_memory=True, num_workers=args.nThreads)
+    data_loader = torch.utils.data.DataLoader(
+        data.gallery, batch_size=args.batch_size,
+        shuffle=False, drop_last=False, pin_memory=True,
+        num_workers=args.nThreads)
     features, labels = extract_features(model, data_loader, print_freq=5, metric=None)
 
     sim_mat = pairwise_similarity(features)
@@ -86,6 +69,7 @@ else:
             data.test, batch_size=args.batch_size, shuffle=False, drop_last=False,
             pin_memory=True, num_workers=args.nThreads)
     else:
+        data = DataSet.create(args.data, test=False)
         data_loader = torch.utils.data.DataLoader(
             data.train, batch_size=args.batch_size, shuffle=False, drop_last=False,
             pin_memory=True, num_workers=args.nThreads)
@@ -102,6 +86,5 @@ else:
 result = ['%.4f' % r for r in result]
 temp = '  '
 result = temp.join(result)
-print('Epoch-%s' % name, result)
-print('\n')
+print('Epoch-%d' % epoch, result)
 

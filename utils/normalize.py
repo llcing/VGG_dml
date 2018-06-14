@@ -1,1 +1,0 @@
-from __future__ import print_function, absolute_importdef normalize(x):    norm = x.norm(dim=1, p=2, keepdim=True)    x = x.div(norm.expand_as(x))    return x

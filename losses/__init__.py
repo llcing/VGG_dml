@@ -35,11 +35,6 @@ from .MCALoss import MCALoss
 from .DecorLoss import DecorLoss
 from .OriBinLoss import OriBinLoss
 from .DivergenceLoss import DivergenceLoss
-from .HDCLoss import HDCLoss
-from .HDC_Bin_Loss import HDC_Bin_Loss
-from .DevianceLoss import DevianceLoss
-from .MeanBinDevianceLoss import MeanBinDevianceLoss
-
 
 __factory = {
     'softneig': SoftmaxNeigLoss,
@@ -60,6 +55,8 @@ __factory = {
     'dwdevbranch': DistWeightDevBranchLoss,
     'bdwneig': BDWNeighbourLoss,
     'edwneig': EnsembleDWNeighbourLoss,
+  #  'branchKS': BranchKNNSoftmax,
+  #  'JSDivKS': JSDivKNNSoftmaxLoss,
     'triplet': Triplet,
     'Atriplet': ATriplet,
     'batchall': BatchAll,
@@ -72,10 +69,6 @@ __factory = {
     'div': DivergenceLoss,
     'decor': DecorLoss,
     'ori_bin': OriBinLoss,
-    'hdc': HDCLoss,
-    'hdc_bin': HDC_Bin_Loss,
-    'dev': DevianceLoss,
-    'mbin': MeanBinDevianceLoss,
 }
 
 
@@ -95,6 +88,7 @@ def create(name, *args, **kwargs):
     if name not in __factory:
         raise KeyError("Unknown loss:", name)
     return __factory[name](*args, **kwargs)
+
 
 
 def names():

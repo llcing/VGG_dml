@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 DATA="shop"
-loss="mbin"
+loss="bin"
 checkpoints="/opt/intern/users/xunwang/checkpoints"
 r="_model.pkl"
 
@@ -17,11 +17,11 @@ DIM="512"
 
 l=$checkpoints/$loss/$DATA/$DIM
 mkdir $l
-CUDA_VISIBLE_DEVICES=2  python train.py -data $DATA  -BN 0  -init random  -lr 1e-5 -dim $DIM -alpha 40 -num_instances 4 -BatchSize 72 -loss $loss  -epochs 201 -checkpoints $checkpoints  -log_dir $l -save_step 5
+CUDA_VISIBLE_DEVICES=7   python train.py -data $DATA  -BN 0  -init random  -lr 1e-5 -dim $DIM -alpha 40 -num_instances 4 -BatchSize 72 -loss $loss  -epochs 201 -checkpoints $checkpoints  -log_dir $l -save_step 5
 Model_LIST="40 60 80 100 120 140 160 180 200"
 for i in $Model_LIST; do
-    CUDA_VISIBLE_DEVICES=2  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM.txt
-    CUDA_VISIBLE_DEVICES=2  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-pool.txt
+    CUDA_VISIBLE_DEVICES=7  python test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM.txt
+    CUDA_VISIBLE_DEVICES=7  python pool_test.py -data $DATA -r $l/$i$r >>result/$loss/$DATA/$DIM-pool.txt
 done
 
 
